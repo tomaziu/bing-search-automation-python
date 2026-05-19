@@ -12,7 +12,22 @@ def config_padrao():
         "tempo_login": 5,
         "browser_path": DEFAULT_BROWSER_PATH,
         "auto_inicio": False,
-        "niveis": ["1", "1", "1"]
+        "niveis": ["1", "1", "1"],
+        "celular_pontos": 0,
+        "celular_pesquisa_atual": "",
+        "celular_link_atual": "",
+        "celular_pesquisas": [],
+        "celular_indice_atual": 0,
+        "celular_historico": [],
+        "android_adb_path": "adb",
+        "android_serial": "",
+        "android_buscador": "Google",
+        "android_navegador": "Padrao do Android",
+        "android_navegadores": [],
+        "android_quantidade": 10,
+        "android_delay": 6,
+        "android_tempo_abrir": 1.2,
+        "android_pesquisas": ""
     }
 
 

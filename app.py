@@ -5,12 +5,25 @@ import sys
 import threading
 import ctypes
 import ctypes.wintypes
+import secrets
+from urllib.parse import quote_plus
 
+import qrcode
+
+from android_automation import BUSCADORES, NAVEGADORES_ANDROID, AndroidSearchAutomator
 from config_manager import DEFAULT_BROWSER_PATH, carregar_config, salvar_config
+from mobile_server import MobileSearchServer
+from search_generator import gerar_pesquisa
 
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
+
+
+META_PONTOS_CELULAR = 60
+PONTOS_POR_PESQUISA_CELULAR = 3
+TOTAL_PESQUISAS_CELULAR = META_PONTOS_CELULAR // PONTOS_POR_PESQUISA_CELULAR
+TAMANHO_QR_CELULAR = 190
 
 
 class App(ctk.CTk):
@@ -41,6 +54,20 @@ class App(ctk.CTk):
 
         self.processo = None
         self.niveis_vars = []
+        self.celular_pontos = 0
+        self.celular_pesquisa_atual = ""
+        self.celular_link_atual = ""
+        self.celular_pesquisas = []
+        self.celular_indice_atual = 0
+        self.celular_historico = []
+        self.celular_qr_imagem = None
+        self.celular_url = ""
+        self.celular_token = secrets.token_urlsafe(12)
+        self.servidor_celular = None
+        self.celular_lock = threading.RLock()
+        self.android_thread = None
+        self.android_stop_event = threading.Event()
+        self.android_navegador_vars = {}
 
         self.criar_topo()
         self.criar_conteudo()
@@ -107,8 +134,28 @@ class App(ctk.CTk):
     # =========================================================
 
     def criar_conteudo(self):
-        self.container = ctk.CTkScrollableFrame(
+        self.tabs = ctk.CTkTabview(
             self,
+            fg_color=self.cor_bg,
+            segmented_button_fg_color=self.cor_card,
+            segmented_button_selected_color=self.cor_secundaria,
+            segmented_button_selected_hover_color="#059669",
+            segmented_button_unselected_color=self.cor_input,
+            segmented_button_unselected_hover_color=self.cor_borda,
+            text_color=self.cor_texto
+        )
+        self.tabs.pack(
+            fill="both",
+            expand=True,
+            padx=18,
+            pady=(14, 10)
+        )
+        self.tabs.add("PC")
+        self.tabs.add("Celular")
+        self.tabs.add("Android")
+
+        self.container = ctk.CTkScrollableFrame(
+            self.tabs.tab("PC"),
             fg_color=self.cor_card,
             corner_radius=16,
             border_width=1,
@@ -117,8 +164,8 @@ class App(ctk.CTk):
         self.container.pack(
             fill="both",
             expand=True,
-            padx=18,
-            pady=(14, 10)
+            padx=0,
+            pady=(6, 0)
         )
 
         self.status_frame = ctk.CTkFrame(
@@ -232,6 +279,1050 @@ class App(ctk.CTk):
             border_color=self.cor_borda
         )
         self.terminal.pack(fill="both", expand=True, padx=16, pady=(4, 14))
+
+        self.criar_conteudo_celular(self.tabs.tab("Celular"))
+        self.criar_conteudo_android(self.tabs.tab("Android"))
+
+    # =========================================================
+
+    def criar_conteudo_android(self, parent):
+        self.android_container = ctk.CTkScrollableFrame(
+            parent,
+            fg_color=self.cor_card,
+            corner_radius=16,
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        self.android_container.pack(
+            fill="both",
+            expand=True,
+            padx=0,
+            pady=(6, 0)
+        )
+
+        self.criar_secao("Automacao Android", self.android_container)
+
+        self.android_status = ctk.CTkLabel(
+            self.android_container,
+            text="ADB nao verificado",
+            font=("Segoe UI", 12, "bold"),
+            text_color=self.cor_texto_suave
+        )
+        self.android_status.pack(anchor="w", padx=20, pady=(0, 8))
+
+        self.android_grid = ctk.CTkFrame(
+            self.android_container,
+            fg_color="transparent"
+        )
+        self.android_grid.pack(fill="x", padx=16, pady=(0, 8))
+        self.android_grid.grid_columnconfigure((0, 1), weight=1)
+
+        self.entry_android_adb = self.criar_entry_android(
+            self.android_grid,
+            "ADB",
+            "adb",
+            0,
+            0
+        )
+        self.entry_android_serial = self.criar_entry_android(
+            self.android_grid,
+            "Serial",
+            "",
+            0,
+            1
+        )
+
+        self.frame_android_opcoes = ctk.CTkFrame(
+            self.android_container,
+            fg_color="transparent"
+        )
+        self.frame_android_opcoes.pack(fill="x", padx=16, pady=(0, 8))
+        self.frame_android_opcoes.grid_columnconfigure((0, 1), weight=1)
+
+        self.combo_android_buscador = self.criar_combo_android(
+            self.frame_android_opcoes,
+            "Buscador",
+            list(BUSCADORES.keys()),
+            "Google",
+            0,
+            0
+        )
+        self.combo_android_navegador = self.criar_combo_android(
+            self.frame_android_opcoes,
+            "Navegador",
+            list(NAVEGADORES_ANDROID.keys()),
+            "Padrao do Android",
+            0,
+            1
+        )
+
+        self.criar_secao("Alternar Navegadores", self.android_container)
+
+        self.frame_android_navegadores = ctk.CTkFrame(
+            self.android_container,
+            fg_color=self.cor_input,
+            corner_radius=12,
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        self.frame_android_navegadores.pack(fill="x", padx=16, pady=(4, 10))
+        self.frame_android_navegadores.grid_columnconfigure((0, 1), weight=1)
+
+        navegadores_alternaveis = [
+            nome
+            for nome in NAVEGADORES_ANDROID
+            if nome != "Padrao do Android"
+        ]
+        self.android_navegador_vars.clear()
+
+        for indice, nome in enumerate(navegadores_alternaveis):
+            var = ctk.BooleanVar(value=False)
+            self.android_navegador_vars[nome] = var
+
+            checkbox = ctk.CTkCheckBox(
+                self.frame_android_navegadores,
+                text=nome,
+                variable=var,
+                command=self.salvar_config,
+                corner_radius=6,
+                border_width=2,
+                fg_color=self.cor_secundaria,
+                hover_color="#059669",
+                text_color=self.cor_texto,
+                font=("Segoe UI", 11)
+            )
+            checkbox.grid(
+                row=indice // 2,
+                column=indice % 2,
+                padx=10,
+                pady=7,
+                sticky="w"
+            )
+
+        self.frame_android_execucao = ctk.CTkFrame(
+            self.android_container,
+            fg_color="transparent"
+        )
+        self.frame_android_execucao.pack(fill="x", padx=16, pady=(0, 8))
+        self.frame_android_execucao.grid_columnconfigure((0, 1), weight=1)
+
+        self.entry_android_quantidade = self.criar_entry_android(
+            self.frame_android_execucao,
+            "Quantidade",
+            "10",
+            0,
+            0
+        )
+        self.entry_android_delay = self.criar_entry_android(
+            self.frame_android_execucao,
+            "Delay (s)",
+            "6",
+            0,
+            1
+        )
+        self.entry_android_tempo_abrir = self.criar_entry_android(
+            self.frame_android_execucao,
+            "Abrir (s)",
+            "1.2",
+            1,
+            0
+        )
+
+        self.criar_secao("Pesquisas", self.android_container)
+
+        self.texto_android_pesquisas = ctk.CTkTextbox(
+            self.android_container,
+            height=130,
+            corner_radius=12,
+            fg_color="#070d18",
+            font=("Consolas", 11),
+            text_color="#7dd3fc",
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        self.texto_android_pesquisas.pack(
+            fill="both",
+            expand=True,
+            padx=16,
+            pady=(4, 10)
+        )
+
+        self.frame_android_botoes = ctk.CTkFrame(
+            self.android_container,
+            fg_color="transparent"
+        )
+        self.frame_android_botoes.pack(fill="x", padx=16, pady=(0, 10))
+        self.frame_android_botoes.grid_columnconfigure((0, 1), weight=1)
+
+        self.btn_android_verificar = ctk.CTkButton(
+            self.frame_android_botoes,
+            text="Verificar ADB",
+            height=38,
+            corner_radius=9,
+            font=("Segoe UI", 12, "bold"),
+            fg_color=self.cor_secundaria,
+            hover_color="#059669",
+            command=self.verificar_android
+        )
+        self.btn_android_verificar.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
+
+        self.btn_android_gerar = ctk.CTkButton(
+            self.frame_android_botoes,
+            text="Gerar lista",
+            height=38,
+            corner_radius=9,
+            font=("Segoe UI", 12, "bold"),
+            fg_color="#2563eb",
+            hover_color="#1d4ed8",
+            command=self.gerar_lista_android
+        )
+        self.btn_android_gerar.grid(row=0, column=1, padx=4, pady=4, sticky="ew")
+
+        self.btn_android_iniciar = ctk.CTkButton(
+            self.frame_android_botoes,
+            text="Iniciar",
+            height=38,
+            corner_radius=9,
+            font=("Segoe UI", 12, "bold"),
+            fg_color="#0891b2",
+            hover_color="#0e7490",
+            command=self.iniciar_android
+        )
+        self.btn_android_iniciar.grid(row=1, column=0, padx=4, pady=4, sticky="ew")
+
+        self.btn_android_parar = ctk.CTkButton(
+            self.frame_android_botoes,
+            text="Parar",
+            height=38,
+            corner_radius=9,
+            font=("Segoe UI", 12, "bold"),
+            fg_color="#e11d48",
+            hover_color="#be123c",
+            command=self.parar_android
+        )
+        self.btn_android_parar.grid(row=1, column=1, padx=4, pady=4, sticky="ew")
+
+        self.criar_secao("Console Android", self.android_container)
+
+        self.console_android = ctk.CTkTextbox(
+            self.android_container,
+            height=160,
+            corner_radius=12,
+            fg_color="#070d18",
+            font=("Consolas", 11),
+            text_color="#7dd3fc",
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        self.console_android.pack(
+            fill="both",
+            expand=True,
+            padx=16,
+            pady=(4, 14)
+        )
+
+    # =========================================================
+
+    def criar_entry_android(self, parent, texto, valor_padrao, linha, coluna):
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.grid(row=linha, column=coluna, padx=4, pady=4, sticky="ew")
+
+        ctk.CTkLabel(
+            frame,
+            text=texto,
+            font=("Segoe UI", 11, "bold"),
+            text_color=self.cor_texto
+        ).pack(anchor="w", pady=(0, 3))
+
+        entry = ctk.CTkEntry(
+            frame,
+            height=36,
+            corner_radius=9,
+            border_width=1,
+            border_color=self.cor_borda,
+            fg_color=self.cor_input,
+            text_color=self.cor_texto,
+            font=("Segoe UI", 11)
+        )
+        entry.pack(fill="x")
+        entry.insert(0, valor_padrao)
+        entry.bind("<KeyRelease>", lambda e: self.salvar_config())
+        return entry
+
+    # =========================================================
+
+    def criar_combo_android(self, parent, texto, valores, valor_padrao, linha, coluna):
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.grid(row=linha, column=coluna, padx=4, pady=4, sticky="ew")
+
+        ctk.CTkLabel(
+            frame,
+            text=texto,
+            font=("Segoe UI", 11, "bold"),
+            text_color=self.cor_texto
+        ).pack(anchor="w", pady=(0, 3))
+
+        combo = ctk.CTkComboBox(
+            frame,
+            values=valores,
+            height=36,
+            corner_radius=9,
+            border_width=1,
+            border_color=self.cor_borda,
+            fg_color=self.cor_input,
+            button_color=self.cor_secundaria,
+            button_hover_color="#059669",
+            dropdown_fg_color=self.cor_card_claro,
+            dropdown_hover_color=self.cor_borda,
+            text_color=self.cor_texto,
+            font=("Segoe UI", 11),
+            command=lambda valor: self.salvar_config()
+        )
+        combo.pack(fill="x")
+        combo.set(valor_padrao)
+        return combo
+
+    # =========================================================
+
+    def obter_navegadores_android_marcados(self):
+        return [
+            nome
+            for nome, var in self.android_navegador_vars.items()
+            if var.get()
+        ]
+
+    # =========================================================
+
+    def obter_navegadores_android_execucao(self):
+        navegadores = self.obter_navegadores_android_marcados()
+
+        if navegadores:
+            return navegadores
+
+        navegador = self.combo_android_navegador.get()
+        return [navegador or "Padrao do Android"]
+
+    def criar_conteudo_celular(self, parent):
+        self.celular_container = ctk.CTkScrollableFrame(
+            parent,
+            fg_color=self.cor_card,
+            corner_radius=16,
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        self.celular_container.pack(
+            fill="both",
+            expand=True,
+            padx=0,
+            pady=(6, 0)
+        )
+
+        self.criar_secao("Celular Assistido", self.celular_container)
+
+        self.frame_celular_status = ctk.CTkFrame(
+            self.celular_container,
+            fg_color=self.cor_input,
+            corner_radius=12,
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        self.frame_celular_status.pack(fill="x", padx=16, pady=(4, 10))
+
+        self.label_celular_pontos = ctk.CTkLabel(
+            self.frame_celular_status,
+            text="0/60 pontos",
+            font=("Segoe UI", 18, "bold"),
+            text_color=self.cor_texto
+        )
+        self.label_celular_pontos.pack(pady=(10, 4))
+
+        self.progress_celular = ctk.CTkProgressBar(
+            self.frame_celular_status,
+            height=12,
+            corner_radius=8,
+            progress_color=self.cor_secundaria,
+            fg_color=self.cor_borda
+        )
+        self.progress_celular.pack(fill="x", padx=18, pady=(0, 8))
+
+        self.label_celular_buscas = ctk.CTkLabel(
+            self.frame_celular_status,
+            text=f"0/{TOTAL_PESQUISAS_CELULAR} pesquisas",
+            font=("Segoe UI", 11, "bold"),
+            text_color=self.cor_texto_suave
+        )
+        self.label_celular_buscas.pack(pady=(0, 10))
+
+        self.criar_secao("Pagina no Celular", self.celular_container)
+
+        self.entry_celular_link = ctk.CTkEntry(
+            self.celular_container,
+            height=36,
+            corner_radius=9,
+            border_width=1,
+            border_color=self.cor_borda,
+            fg_color=self.cor_input,
+            text_color=self.cor_texto,
+            font=("Segoe UI", 11)
+        )
+        self.entry_celular_link.pack(fill="x", padx=20, pady=(0, 8))
+
+        self.criar_secao("Pesquisa Atual", self.celular_container)
+
+        self.entry_celular_pesquisa = ctk.CTkEntry(
+            self.celular_container,
+            height=36,
+            corner_radius=9,
+            border_width=1,
+            border_color=self.cor_borda,
+            fg_color=self.cor_input,
+            text_color=self.cor_texto,
+            font=("Segoe UI", 11)
+        )
+        self.entry_celular_pesquisa.pack(fill="x", padx=20, pady=(0, 10))
+
+        self.frame_celular_botoes = ctk.CTkFrame(
+            self.celular_container,
+            fg_color="transparent"
+        )
+        self.frame_celular_botoes.pack(fill="x", padx=16, pady=(0, 12))
+        self.frame_celular_botoes.grid_columnconfigure((0, 1), weight=1)
+
+        self.btn_celular_gerar = ctk.CTkButton(
+            self.frame_celular_botoes,
+            text="Gerar 20",
+            height=38,
+            corner_radius=9,
+            font=("Segoe UI", 12, "bold"),
+            fg_color=self.cor_secundaria,
+            hover_color="#059669",
+            command=self.gerar_pesquisa_celular
+        )
+        self.btn_celular_gerar.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
+
+        self.btn_celular_copiar = ctk.CTkButton(
+            self.frame_celular_botoes,
+            text="Copiar pagina",
+            height=38,
+            corner_radius=9,
+            font=("Segoe UI", 12, "bold"),
+            fg_color="#2563eb",
+            hover_color="#1d4ed8",
+            command=self.copiar_link_celular
+        )
+        self.btn_celular_copiar.grid(row=0, column=1, padx=4, pady=4, sticky="ew")
+
+        self.btn_celular_feita = ctk.CTkButton(
+            self.frame_celular_botoes,
+            text="Marcar feita",
+            height=38,
+            corner_radius=9,
+            font=("Segoe UI", 12, "bold"),
+            fg_color="#0891b2",
+            hover_color="#0e7490",
+            command=self.marcar_pesquisa_celular
+        )
+        self.btn_celular_feita.grid(row=1, column=0, padx=4, pady=4, sticky="ew")
+
+        self.btn_celular_resetar = ctk.CTkButton(
+            self.frame_celular_botoes,
+            text="Resetar",
+            height=38,
+            corner_radius=9,
+            font=("Segoe UI", 12, "bold"),
+            fg_color="#e11d48",
+            hover_color="#be123c",
+            command=self.resetar_celular
+        )
+        self.btn_celular_resetar.grid(row=1, column=1, padx=4, pady=4, sticky="ew")
+
+        self.frame_qr_celular = ctk.CTkFrame(
+            self.celular_container,
+            fg_color=self.cor_input,
+            corner_radius=12,
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        self.frame_qr_celular.pack(padx=16, pady=(2, 10))
+
+        self.label_qr_celular = ctk.CTkLabel(
+            self.frame_qr_celular,
+            text="QR Code",
+            width=TAMANHO_QR_CELULAR,
+            height=TAMANHO_QR_CELULAR,
+            text_color=self.cor_texto_suave
+        )
+        self.label_qr_celular.pack(padx=12, pady=12)
+
+        self.label_celular_status = ctk.CTkLabel(
+            self.celular_container,
+            text="Aguardando pesquisa",
+            font=("Segoe UI", 11, "bold"),
+            text_color=self.cor_texto_suave
+        )
+        self.label_celular_status.pack(padx=20, pady=(0, 8))
+
+        self.criar_secao("Historico", self.celular_container)
+
+        self.texto_celular_historico = ctk.CTkTextbox(
+            self.celular_container,
+            height=120,
+            corner_radius=12,
+            fg_color="#070d18",
+            font=("Consolas", 11),
+            text_color="#7dd3fc",
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        self.texto_celular_historico.pack(
+            fill="both",
+            expand=True,
+            padx=16,
+            pady=(4, 14)
+        )
+
+        self.atualizar_celular()
+        self.iniciar_servidor_celular()
+
+    # =========================================================
+
+    def montar_link_bing(self, pesquisa):
+        return f"https://www.bing.com/search?q={quote_plus(pesquisa)}"
+
+    # =========================================================
+
+    def log_android(self, texto):
+        def escrever():
+            self.console_android.insert(END, f"{texto}\n")
+            self.console_android.see("end")
+
+        if self.executar_na_thread_interface():
+            escrever()
+            return
+
+        try:
+            self.after(0, escrever)
+        except RuntimeError:
+            print(texto, flush=True)
+
+    # =========================================================
+
+    def criar_automator_android(self):
+        return AndroidSearchAutomator(
+            self.entry_android_adb.get(),
+            self.entry_android_serial.get()
+        )
+
+    # =========================================================
+
+    def atualizar_status_android(self, texto, cor):
+        def aplicar():
+            self.android_status.configure(text=texto, text_color=cor)
+
+        if self.executar_na_thread_interface():
+            aplicar()
+            return
+
+        try:
+            self.after(0, aplicar)
+        except RuntimeError:
+            print(f"[ANDROID] {texto}", flush=True)
+
+    # =========================================================
+
+    def obter_pesquisas_android(self):
+        conteudo = self.texto_android_pesquisas.get("1.0", "end").strip()
+        return [
+            linha.strip()
+            for linha in conteudo.splitlines()
+            if linha.strip()
+        ]
+
+    # =========================================================
+
+    def verificar_android(self):
+        self.salvar_config()
+        self.android_status.configure(
+            text="Verificando ADB...",
+            text_color=self.cor_texto_suave
+        )
+        adb_path = self.entry_android_adb.get()
+        serial = self.entry_android_serial.get()
+
+        def rodar():
+            try:
+                automator = AndroidSearchAutomator(adb_path, serial)
+                versao, dispositivos = automator.verificar()
+                self.log_android("[ANDROID] ADB encontrado.")
+
+                primeira_linha = versao.splitlines()[0] if versao else "ADB OK"
+                self.log_android(f"[ANDROID] {primeira_linha}")
+
+                if not dispositivos:
+                    mensagem = "Nenhum Android conectado"
+                    self.log_android("[ANDROID] Nenhum dispositivo listado.")
+                    cor = "#fb7185"
+                else:
+                    partes = [
+                        f"{item['serial']} ({item['estado']})"
+                        for item in dispositivos
+                    ]
+                    mensagem = "; ".join(partes)
+                    self.log_android(f"[ANDROID] Dispositivos: {mensagem}")
+                    cor = self.cor_secundaria
+
+                self.atualizar_status_android(mensagem, cor)
+
+            except Exception as e:
+                self.log_android(f"[ANDROID][ERRO] {e}")
+                self.atualizar_status_android(
+                    "ADB nao encontrado ou sem permissao",
+                    "#fb7185"
+                )
+
+        threading.Thread(target=rodar, daemon=True).start()
+
+    # =========================================================
+
+    def gerar_lista_android(self):
+        try:
+            quantidade = int(self.entry_android_quantidade.get())
+        except Exception:
+            quantidade = 10
+
+        quantidade = max(1, min(100, quantidade))
+        pesquisas = [gerar_pesquisa() for _ in range(quantidade)]
+
+        self.texto_android_pesquisas.delete("1.0", "end")
+        self.texto_android_pesquisas.insert("end", "\n".join(pesquisas))
+        self.log_android(f"[ANDROID] Lista gerada com {quantidade} pesquisas.")
+        self.salvar_config()
+
+    # =========================================================
+
+    def iniciar_android(self):
+        if self.android_thread and self.android_thread.is_alive():
+            self.log_android("[ANDROID] Automacao ja esta em execucao.")
+            return
+
+        pesquisas = self.obter_pesquisas_android()
+
+        if not pesquisas:
+            self.gerar_lista_android()
+            pesquisas = self.obter_pesquisas_android()
+
+        try:
+            delay = float(self.entry_android_delay.get().replace(",", "."))
+        except Exception:
+            delay = 6
+
+        delay = max(1, delay)
+
+        try:
+            tempo_abrir = float(
+                self.entry_android_tempo_abrir.get().replace(",", ".")
+            )
+        except Exception:
+            tempo_abrir = 1.2
+
+        tempo_abrir = max(0.4, tempo_abrir)
+        buscador = self.combo_android_buscador.get()
+        navegadores = self.obter_navegadores_android_execucao()
+        adb_path = self.entry_android_adb.get()
+        serial = self.entry_android_serial.get()
+        self.android_stop_event.clear()
+        self.salvar_config()
+
+        def rodar():
+            try:
+                self.atualizar_status_android(
+                    "Executando automacao Android",
+                    self.cor_secundaria
+                )
+                automator = AndroidSearchAutomator(adb_path, serial)
+                automator.executar_pesquisas(
+                    pesquisas,
+                    buscador,
+                    navegadores,
+                    delay,
+                    tempo_abrir,
+                    self.log_android,
+                    self.android_stop_event.is_set
+                )
+                self.atualizar_status_android(
+                    "Automacao Android finalizada",
+                    "#60a5fa"
+                )
+
+            except Exception as e:
+                self.log_android(f"[ANDROID][ERRO] {e}")
+                self.atualizar_status_android(
+                    "Erro na automacao Android",
+                    "#fb7185"
+                )
+
+        self.android_thread = threading.Thread(target=rodar, daemon=True)
+        self.android_thread.start()
+
+    # =========================================================
+
+    def parar_android(self):
+        self.android_stop_event.set()
+        self.log_android("[ANDROID] Parada solicitada.")
+
+    # =========================================================
+
+    def executar_na_thread_interface(self):
+        return threading.current_thread() is threading.main_thread()
+
+    # =========================================================
+
+    def definir_status_celular(self, texto, cor):
+        if not hasattr(self, "label_celular_status"):
+            return
+
+        def aplicar():
+            self.label_celular_status.configure(text=texto, text_color=cor)
+
+        if self.executar_na_thread_interface():
+            aplicar()
+            return
+
+        try:
+            self.after(0, aplicar)
+        except RuntimeError:
+            pass
+
+    # =========================================================
+
+    def finalizar_alteracao_celular(self):
+        if self.executar_na_thread_interface():
+            self.atualizar_celular()
+            self.salvar_config()
+            return
+
+        def aplicar():
+            self.atualizar_celular()
+            self.salvar_config()
+
+        try:
+            self.after(0, aplicar)
+        except RuntimeError:
+            pass
+
+    # =========================================================
+
+    def iniciar_servidor_celular(self):
+        try:
+            self.servidor_celular = MobileSearchServer(
+                self,
+                self.celular_token
+            )
+            self.celular_url = self.servidor_celular.iniciar()
+            self.definir_status_celular(
+                "Pagina celular pronta",
+                self.cor_secundaria
+            )
+            self.atualizar_celular()
+        except Exception as e:
+            self.definir_status_celular(
+                f"Erro ao iniciar pagina celular: {e}",
+                "#fb7185"
+            )
+
+    # =========================================================
+
+    def gerar_lote_celular(self):
+        with self.celular_lock:
+            pesquisas = []
+            termos_usados = set()
+
+            while len(pesquisas) < TOTAL_PESQUISAS_CELULAR:
+                pesquisa = gerar_pesquisa()
+
+                if pesquisa in termos_usados:
+                    continue
+
+                termos_usados.add(pesquisa)
+                pesquisas.append(
+                    {
+                        "pesquisa": pesquisa,
+                        "link": self.montar_link_bing(pesquisa),
+                        "concluida": False
+                    }
+                )
+
+            self.celular_pesquisas = pesquisas
+            self.celular_indice_atual = 0
+            self.celular_pontos = 0
+            self.celular_historico = []
+            self.sincronizar_pesquisa_celular_atual()
+
+        self.definir_status_celular(
+            "Pacote de 20 pesquisas gerado",
+            self.cor_secundaria
+        )
+        self.finalizar_alteracao_celular()
+        return self.obter_estado_mobile()
+
+    # =========================================================
+
+    def gerar_pesquisa_celular(self):
+        self.gerar_lote_celular()
+
+    # =========================================================
+
+    def copiar_link_celular(self):
+        if not self.celular_url:
+            return
+
+        self.clipboard_clear()
+        self.clipboard_append(self.celular_url)
+        self.label_celular_status.configure(
+            text="Pagina copiada",
+            text_color=self.cor_secundaria
+        )
+
+    # =========================================================
+
+    def sincronizar_pesquisa_celular_atual(self):
+        with self.celular_lock:
+            atual = self.obter_item_celular_atual()
+
+            if not atual:
+                self.celular_pesquisa_atual = ""
+                self.celular_link_atual = ""
+                return
+
+            self.celular_pesquisa_atual = atual["pesquisa"]
+            self.celular_link_atual = atual["link"]
+
+    # =========================================================
+
+    def obter_item_celular_atual(self):
+        with self.celular_lock:
+            if not self.celular_pesquisas:
+                return None
+
+            for indice in range(self.celular_indice_atual, len(self.celular_pesquisas)):
+                item = self.celular_pesquisas[indice]
+
+                if not item.get("concluida", False):
+                    self.celular_indice_atual = indice
+                    return item
+
+            for indice, item in enumerate(self.celular_pesquisas):
+                if not item.get("concluida", False):
+                    self.celular_indice_atual = indice
+                    return item
+
+            return None
+
+    # =========================================================
+
+    def atualizar_pontos_celular(self):
+        with self.celular_lock:
+            feitas = sum(
+                1
+                for item in self.celular_pesquisas
+                if item.get("concluida", False)
+            )
+            self.celular_pontos = min(
+                META_PONTOS_CELULAR,
+                feitas * PONTOS_POR_PESQUISA_CELULAR
+            )
+
+    # =========================================================
+
+    def marcar_pesquisa_celular(self):
+        self.marcar_pesquisa_celular_mobile()
+
+    # =========================================================
+
+    def marcar_pesquisa_celular_mobile(self):
+        with self.celular_lock:
+            if not self.celular_pesquisas:
+                self.gerar_lote_celular()
+
+            atual = self.obter_item_celular_atual()
+
+            if not atual:
+                self.definir_status_celular(
+                    "Meta celular concluida",
+                    self.cor_secundaria
+                )
+                self.finalizar_alteracao_celular()
+                return self.obter_estado_mobile()
+
+            atual["concluida"] = True
+            self.celular_historico.insert(
+                0,
+                {
+                    "pesquisa": atual["pesquisa"],
+                    "link": atual["link"]
+                }
+            )
+            self.celular_historico = self.celular_historico[:TOTAL_PESQUISAS_CELULAR]
+            self.celular_indice_atual += 1
+            self.atualizar_pontos_celular()
+            self.sincronizar_pesquisa_celular_atual()
+
+        if self.celular_pontos >= META_PONTOS_CELULAR:
+            self.definir_status_celular(
+                "Meta celular concluida",
+                self.cor_secundaria
+            )
+        else:
+            self.definir_status_celular(
+                "Pesquisa marcada",
+                self.cor_secundaria
+            )
+
+        self.finalizar_alteracao_celular()
+        return self.obter_estado_mobile()
+
+    # =========================================================
+
+    def resetar_celular(self):
+        self.celular_pontos = 0
+        self.celular_pesquisa_atual = ""
+        self.celular_link_atual = ""
+        self.celular_pesquisas = []
+        self.celular_indice_atual = 0
+        self.celular_historico = []
+        self.label_celular_status.configure(
+            text="Progresso resetado",
+            text_color=self.cor_texto_suave
+        )
+        self.atualizar_celular()
+        self.salvar_config()
+
+    # =========================================================
+
+    def obter_estado_mobile(self):
+        with self.celular_lock:
+            self.atualizar_pontos_celular()
+            self.sincronizar_pesquisa_celular_atual()
+
+            feitas = sum(
+                1
+                for item in self.celular_pesquisas
+                if item.get("concluida", False)
+            )
+            atual = self.obter_item_celular_atual()
+
+            pesquisas = []
+            for indice, item in enumerate(self.celular_pesquisas, start=1):
+                pesquisas.append(
+                    {
+                        "numero": indice,
+                        "pesquisa": item.get("pesquisa", ""),
+                        "link": item.get("link", ""),
+                        "concluida": item.get("concluida", False)
+                    }
+                )
+
+            if atual:
+                atual = {
+                    "pesquisa": atual.get("pesquisa", ""),
+                    "link": atual.get("link", "")
+                }
+
+            return {
+                "pontos": self.celular_pontos,
+                "meta": META_PONTOS_CELULAR,
+                "feitas": feitas,
+                "total": TOTAL_PESQUISAS_CELULAR,
+                "progresso": self.celular_pontos / META_PONTOS_CELULAR,
+                "atual": atual,
+                "pesquisas": pesquisas
+            }
+
+    # =========================================================
+
+    def atualizar_celular(self):
+        if not hasattr(self, "entry_celular_pesquisa"):
+            return
+
+        self.atualizar_pontos_celular()
+        self.sincronizar_pesquisa_celular_atual()
+
+        pesquisas_feitas = sum(
+            1
+            for item in self.celular_pesquisas
+            if item.get("concluida", False)
+        )
+        progresso = self.celular_pontos / META_PONTOS_CELULAR
+
+        self.label_celular_pontos.configure(
+            text=f"{self.celular_pontos}/{META_PONTOS_CELULAR} pontos"
+        )
+        self.label_celular_buscas.configure(
+            text=f"{pesquisas_feitas}/{TOTAL_PESQUISAS_CELULAR} pesquisas"
+        )
+        self.progress_celular.set(progresso)
+
+        self.entry_celular_pesquisa.delete(0, "end")
+        self.entry_celular_pesquisa.insert(0, self.celular_pesquisa_atual)
+        self.entry_celular_link.delete(0, "end")
+        self.entry_celular_link.insert(0, self.celular_url)
+
+        self.atualizar_qr_celular()
+        self.atualizar_historico_celular()
+
+    # =========================================================
+
+    def atualizar_qr_celular(self):
+        if not self.celular_url:
+            self.celular_qr_imagem = None
+            self.label_qr_celular.configure(
+                image=None,
+                text="QR Code"
+            )
+            return
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=8,
+            border=2
+        )
+        qr.add_data(self.celular_url)
+        qr.make(fit=True)
+        imagem = qr.make_image(
+            fill_color="black",
+            back_color="white"
+        ).convert("RGB")
+
+        self.celular_qr_imagem = ctk.CTkImage(
+            light_image=imagem,
+            dark_image=imagem,
+            size=(TAMANHO_QR_CELULAR, TAMANHO_QR_CELULAR)
+        )
+        self.label_qr_celular.configure(
+            image=self.celular_qr_imagem,
+            text=""
+        )
+
+    # =========================================================
+
+    def atualizar_historico_celular(self):
+        self.texto_celular_historico.delete("1.0", "end")
+
+        if not self.celular_pesquisas:
+            self.texto_celular_historico.insert(
+                "end",
+                "Nenhum pacote gerado. Use Gerar 20."
+            )
+            return
+
+        for indice, item in enumerate(self.celular_pesquisas, start=1):
+            pesquisa = item.get("pesquisa", "")
+            status = "OK" if item.get("concluida", False) else "Pendente"
+            self.texto_celular_historico.insert(
+                "end",
+                f"{indice}. [{status}] {pesquisa}\n"
+            )
 
     # =========================================================
 
@@ -412,7 +1503,55 @@ class App(ctk.CTk):
             self.entry_path.insert(0, config.get("browser_path", DEFAULT_BROWSER_PATH))
 
             self.auto_inicio.set(config.get("auto_inicio", False))
+            self.celular_pontos = int(config.get("celular_pontos", 0))
+            self.celular_pesquisa_atual = config.get("celular_pesquisa_atual", "")
+            self.celular_link_atual = config.get("celular_link_atual", "")
+            self.celular_pesquisas = config.get("celular_pesquisas", [])
+            self.celular_indice_atual = int(config.get("celular_indice_atual", 0))
+            self.celular_historico = config.get("celular_historico", [])
+
+            self.entry_android_adb.delete(0, "end")
+            self.entry_android_adb.insert(0, config.get("android_adb_path", "adb"))
+
+            self.entry_android_serial.delete(0, "end")
+            self.entry_android_serial.insert(0, config.get("android_serial", ""))
+
+            self.combo_android_buscador.set(config.get("android_buscador", "Google"))
+            self.combo_android_navegador.set(
+                config.get("android_navegador", "Padrao do Android")
+            )
+
+            navegadores_android = config.get("android_navegadores", [])
+
+            if isinstance(navegadores_android, str):
+                navegadores_android = [navegadores_android]
+
+            for nome, var in self.android_navegador_vars.items():
+                var.set(nome in navegadores_android)
+
+            self.entry_android_quantidade.delete(0, "end")
+            self.entry_android_quantidade.insert(
+                0,
+                config.get("android_quantidade", 10)
+            )
+
+            self.entry_android_delay.delete(0, "end")
+            self.entry_android_delay.insert(0, config.get("android_delay", 6))
+
+            self.entry_android_tempo_abrir.delete(0, "end")
+            self.entry_android_tempo_abrir.insert(
+                0,
+                config.get("android_tempo_abrir", 1.2)
+            )
+
+            self.texto_android_pesquisas.delete("1.0", "end")
+            self.texto_android_pesquisas.insert(
+                "end",
+                config.get("android_pesquisas", "")
+            )
+
             self.atualizar_niveis()
+            self.atualizar_celular()
 
             niveis = config.get("niveis", [])
             for i, nivel in enumerate(niveis):
@@ -433,7 +1572,29 @@ class App(ctk.CTk):
                 "tempo_login": int(self.entry_login.get()),
                 "browser_path": self.entry_path.get(),
                 "auto_inicio": self.auto_inicio.get(),
-                "niveis": [var.get() for var in self.niveis_vars]
+                "niveis": [var.get() for var in self.niveis_vars],
+                "celular_pontos": self.celular_pontos,
+                "celular_pesquisa_atual": self.celular_pesquisa_atual,
+                "celular_link_atual": self.celular_link_atual,
+                "celular_pesquisas": self.celular_pesquisas,
+                "celular_indice_atual": self.celular_indice_atual,
+                "celular_historico": self.celular_historico,
+                "android_adb_path": self.entry_android_adb.get(),
+                "android_serial": self.entry_android_serial.get(),
+                "android_buscador": self.combo_android_buscador.get(),
+                "android_navegador": self.combo_android_navegador.get(),
+                "android_navegadores": self.obter_navegadores_android_marcados(),
+                "android_quantidade": int(self.entry_android_quantidade.get()),
+                "android_delay": float(
+                    self.entry_android_delay.get().replace(",", ".")
+                ),
+                "android_tempo_abrir": float(
+                    self.entry_android_tempo_abrir.get().replace(",", ".")
+                ),
+                "android_pesquisas": self.texto_android_pesquisas.get(
+                    "1.0",
+                    "end"
+                ).strip()
             }
 
             salvar_config(config)
@@ -517,6 +1678,18 @@ class App(ctk.CTk):
 
             self.status.configure(text="PARADO", text_color="#fb7185")
             self.btn_abrir.configure(state="normal")
+
+    # =========================================================
+
+    def destroy(self):
+        if self.servidor_celular:
+            try:
+                self.servidor_celular.parar()
+            except Exception:
+                pass
+
+        self.android_stop_event.set()
+        super().destroy()
 
 
 if __name__ == "__main__":
