@@ -10,29 +10,24 @@ DELAY_MIN = 2
 DELAY_MAX = 4
 
 
-def todos_atingiram_limite(navegadores):
-    return all(
-        navegador_data["pontos"] >= navegador_data["limite"]
-        for navegador_data in navegadores
-    )
-
-
-def avisar_limite(indice, navegador_data, log):
-    if navegador_data["limite_avisado"]:
+def avisar_meta_atingida(indice, navegador_data, log):
+    if navegador_data["meta_avisada"]:
         return
+
+    meta_pontos = navegador_data["meta_pontos"]
 
     log(
         f"\n[NAVEGADOR {indice + 1}] "
-        f"LIMITE DE PONTOS ATINGIDO "
-        f"({navegador_data['pontos']}/{navegador_data['limite']})"
+        f"META DE PONTOS ATINGIDA "
+        f"({navegador_data['pontos']}/{meta_pontos}) - continuando pesquisas"
     )
 
-    navegador_data["limite_avisado"] = True
+    navegador_data["meta_avisada"] = True
 
 
 def executar_pesquisa(indice, navegador_data, pesquisa, ultima_pesquisa, contador, log):
     contexto = navegador_data["contexto"]
-    limite = navegador_data["limite"]
+    meta_pontos = navegador_data["meta_pontos"]
     agora = time.time()
     tempo_desde = agora - ultima_pesquisa[indice]
 
@@ -98,15 +93,10 @@ def executar_pesquisa(indice, navegador_data, pesquisa, ultima_pesquisa, contado
     navegador_data["pontos"] += 3
     pontos_atuais = navegador_data["pontos"]
 
-    log(f"[NAVEGADOR {indice + 1}] Pontos: {pontos_atuais}/{limite}")
+    log(f"[NAVEGADOR {indice + 1}] Pontos: {pontos_atuais}/{meta_pontos}")
 
-    if pontos_atuais >= limite:
-        log(
-            f"[NAVEGADOR {indice + 1}] "
-            f"LIMITE DE PONTOS ATINGIDO "
-            f"({pontos_atuais}/{limite})"
-        )
-        navegador_data["limite_avisado"] = True
+    if pontos_atuais >= meta_pontos:
+        avisar_meta_atingida(indice, navegador_data, log)
 
 
 def executar_automacao(navegadores, log):
@@ -120,10 +110,6 @@ def executar_automacao(navegadores, log):
         for indice, navegador_data in enumerate(navegadores):
             if contador >= TOTAL_PESQUISAS:
                 break
-
-            if navegador_data["pontos"] >= navegador_data["limite"]:
-                avisar_limite(indice, navegador_data, log)
-                continue
 
             pesquisa = gerar_pesquisa()
 
@@ -147,7 +133,3 @@ def executar_automacao(navegadores, log):
             log("==============================")
 
             time.sleep(delay)
-
-        if todos_atingiram_limite(navegadores):
-            log("\n[SISTEMA] Todos os navegadores atingiram o limite de pontos.")
-            break

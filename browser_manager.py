@@ -1,7 +1,7 @@
 import time
 
 
-def calcular_limite(nivel):
+def calcular_meta_pontos(nivel):
     if int(nivel) == 2:
         return 90
 
@@ -53,23 +53,22 @@ def abrir_navegadores(playwright, total_navegadores, browser_path, niveis, log):
         pagina.goto("about:blank", wait_until="domcontentloaded")
 
         nivel = int(niveis[indice])
-        limite = calcular_limite(nivel)
+        meta_pontos = calcular_meta_pontos(nivel)
 
         navegadores.append(
             {
                 "contexto": contexto,
-                "pagina": pagina,
                 "nivel": nivel,
-                "limite": limite,
+                "meta_pontos": meta_pontos,
                 "pontos": 0,
-                "limite_avisado": False
+                "meta_avisada": False
             }
         )
 
         log(
             f"[NAVEGADOR {indice + 1}] "
             f"Inicializado com sucesso "
-            f"(Nivel {nivel} - Max {limite} pontos)"
+            f"(Nivel {nivel} - Meta {meta_pontos} pontos)"
         )
 
     return navegadores

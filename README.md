@@ -63,15 +63,7 @@ cd auto-pesquisa-bing
 ## 3️⃣ Instale as dependências
 
 ```bash
-pip install -r requirements.txt
-```
-
----
-
-## 4️⃣ Instale os navegadores do Playwright
-
-```bash
-playwright install
+python -m pip install -r requirements.txt
 ```
 
 ---
@@ -79,12 +71,6 @@ playwright install
 # ▶️ Como usar
 
 Execute:
-
-```bash
-py app.py
-```
-
-ou
 
 ```bash
 python app.py
@@ -102,12 +88,12 @@ No Windows, basta dar dois cliques no arquivo `iniciar_app.bat` dentro da pasta 
 
 # 🧠 Sistema de Níveis
 
-| Nível | Limite Diário |
+| Nível | Meta de pontos |
 |------|----------------|
 | 1 | 30 pontos |
 | 2 | 90 pontos |
 
-Cada navegador pode possuir um nível diferente.
+Cada navegador pode possuir um nível diferente. Ao atingir a meta, o programa avisa no console e continua pesquisando.
 
 ---
 

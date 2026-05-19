@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import END
 import subprocess
+import sys
 import threading
 import ctypes
 import ctypes.wintypes
@@ -370,7 +371,7 @@ class App(ctk.CTk):
     # =========================================================
 
     def log(self, texto):
-        if "LIMITE DE PONTOS ATINGIDO" in texto:
+        if "META DE PONTOS ATINGIDA" in texto:
             self.terminal.insert(END, f"{texto}\n", "verde")
         else:
             self.terminal.insert(END, f"{texto}\n")
@@ -449,20 +450,18 @@ class App(ctk.CTk):
 
         def rodar():
             try:
-                niveis = ",".join([var.get() for var in self.niveis_vars])
+                self.salvar_config()
 
                 self.processo = subprocess.Popen(
                     [
-                        "py",
-                        "main.py",
-                        niveis
+                        sys.executable,
+                        "main.py"
                     ],
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
-                    encoding="cp1252",
-                    universal_newlines=True
+                    encoding="cp1252"
                 )
 
                 if self.auto_inicio.get():
