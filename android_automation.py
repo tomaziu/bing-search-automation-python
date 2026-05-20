@@ -15,7 +15,8 @@ NAVEGADORES_ANDROID = {
     "Firefox": "org.mozilla.firefox",
     "Brave": "com.brave.browser",
     "Opera": "com.opera.browser",
-    "DuckDuckGo": "com.duckduckgo.mobile.android"
+    "DuckDuckGo": "com.duckduckgo.mobile.android",
+    "Bing": "com.microsoft.bing"
 }
 
 

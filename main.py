@@ -1,6 +1,6 @@
-import time
+import asyncio
 
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 
 from browser_manager import abrir_navegadores, fechar_navegadores
 from config_manager import ajustar_niveis, carregar_config
@@ -8,16 +8,17 @@ from logger import log
 from rewards_runner import executar_automacao
 
 
-def main():
+async def main():
     config = carregar_config()
 
     total_navegadores = int(config["navegadores"])
     tempo_login = int(config["tempo_login"])
     browser_path = config["browser_path"]
     niveis = ajustar_niveis(config.get("niveis", []), total_navegadores)
+    modo_pesquisa = config.get("pc_modo_pesquisa", "sequencial")
 
-    with sync_playwright() as playwright:
-        navegadores = abrir_navegadores(
+    async with async_playwright() as playwright:
+        navegadores = await abrir_navegadores(
             playwright,
             total_navegadores,
             browser_path,
@@ -29,18 +30,18 @@ def main():
             log(f"\n[SISTEMA] {total_navegadores} navegadores abertos.")
             log("[SISTEMA] Aguardando comando para iniciar...")
 
-            input()
+            await asyncio.to_thread(input)
 
             log(f"[SISTEMA] Aguardando {tempo_login}s...")
-            time.sleep(tempo_login)
+            await asyncio.sleep(tempo_login)
 
-            executar_automacao(navegadores, log)
+            await executar_automacao(navegadores, log, modo_pesquisa)
 
             log("\n[SISTEMA] Pesquisas finalizadas.")
 
         finally:
-            fechar_navegadores(navegadores)
+            await fechar_navegadores(navegadores)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -111,16 +111,16 @@ Para usar:
 4. Conecte o celular no PC e aceite a autorização RSA na tela do celular.
 5. Na aba Android, clique em **Verificar ADB**.
 6. Gere ou cole uma lista de pesquisas.
-7. Escolha o buscador (Google, Bing, DuckDuckGo, Yahoo ou Startpage), navegador, delay e tempo de abertura.
+7. Escolha o buscador (Google, Bing, DuckDuckGo, Yahoo ou Startpage), marque pelo menos um navegador em **Alternar Navegadores**, ajuste o delay e o tempo de abertura.
 8. Clique em **Iniciar**.
 
-Para alternar entre contas/navegadores no Android, marque os navegadores na seção **Alternar Navegadores**. Se nenhum navegador estiver marcado, o app usa apenas o navegador escolhido no campo **Navegador**. Quando houver vários marcados, cada pesquisa será executada em todos eles, um por vez.
+Para alternar entre contas/navegadores no Android, marque os navegadores na seção **Alternar Navegadores**. Quando houver vários marcados, cada pesquisa será executada em todos eles, um por vez.
 
 ## Contas separadas por navegador
 
 Para usar contas diferentes no mesmo celular:
 
-1. Instale os navegadores que pretende usar, como Chrome, Edge, Brave e Firefox.
+1. Instale os navegadores que pretende usar, como Chrome, Edge, Brave, Firefox e Bing.
 2. Abra cada navegador manualmente no celular uma vez.
 3. Faça login na conta desejada em cada navegador.
 4. Aceite telas iniciais, permissões ou termos que aparecerem.

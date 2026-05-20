@@ -43,6 +43,7 @@ class App(ctk.CTk):
 
         self.processo = None
         self.niveis_vars = []
+        self.pc_modo_pesquisa = ctk.StringVar(value="Sequencial")
         self.android_thread = None
         self.android_stop_event = threading.Event()
         self.android_navegador_vars = {}
@@ -195,6 +196,24 @@ class App(ctk.CTk):
         )
         self.checkbox_auto.pack(anchor="w", padx=20, pady=(4, 12))
 
+        self.criar_secao("Modo de Pesquisa", self.container)
+
+        self.segmento_pc_modo = ctk.CTkSegmentedButton(
+            self.container,
+            values=["Sequencial", "Simultanea"],
+            variable=self.pc_modo_pesquisa,
+            command=lambda valor: self.salvar_config(),
+            height=36,
+            corner_radius=9,
+            selected_color=self.cor_secundaria,
+            selected_hover_color="#059669",
+            unselected_color=self.cor_input,
+            unselected_hover_color=self.cor_borda,
+            text_color=self.cor_texto,
+            font=("Segoe UI", 11, "bold")
+        )
+        self.segmento_pc_modo.pack(fill="x", padx=20, pady=(0, 12))
+
         self.frame_botoes = ctk.CTkFrame(self.container, fg_color="transparent")
         self.frame_botoes.pack(fill="x", padx=16, pady=(2, 10))
         self.frame_botoes.grid_columnconfigure((0, 1), weight=1)
@@ -313,7 +332,7 @@ class App(ctk.CTk):
             fg_color="transparent"
         )
         self.frame_android_opcoes.pack(fill="x", padx=16, pady=(0, 8))
-        self.frame_android_opcoes.grid_columnconfigure((0, 1), weight=1)
+        self.frame_android_opcoes.grid_columnconfigure(0, weight=1)
 
         self.combo_android_buscador = self.criar_combo_android(
             self.frame_android_opcoes,
@@ -322,14 +341,6 @@ class App(ctk.CTk):
             "Google",
             0,
             0
-        )
-        self.combo_android_navegador = self.criar_combo_android(
-            self.frame_android_opcoes,
-            "Navegador",
-            list(NAVEGADORES_ANDROID.keys()),
-            "Padrao do Android",
-            0,
-            1
         )
 
         self.criar_secao("Alternar Navegadores", self.android_container)
@@ -570,13 +581,7 @@ class App(ctk.CTk):
     # =========================================================
 
     def obter_navegadores_android_execucao(self):
-        navegadores = self.obter_navegadores_android_marcados()
-
-        if navegadores:
-            return navegadores
-
-        navegador = self.combo_android_navegador.get()
-        return [navegador or "Padrao do Android"]
+        return self.obter_navegadores_android_marcados()
 
     def log_android(self, texto):
         def escrever():
@@ -715,6 +720,17 @@ class App(ctk.CTk):
         tempo_abrir = max(0.4, tempo_abrir)
         buscador = self.combo_android_buscador.get()
         navegadores = self.obter_navegadores_android_execucao()
+
+        if not navegadores:
+            self.log_android(
+                "[ANDROID] Marque pelo menos um navegador em Alternar Navegadores."
+            )
+            self.atualizar_status_android(
+                "Selecione um navegador Android",
+                "#fb7185"
+            )
+            return
+
         adb_path = self.entry_android_adb.get()
         serial = self.entry_android_serial.get()
         self.android_stop_event.clear()
@@ -899,6 +915,16 @@ class App(ctk.CTk):
 
     # =========================================================
 
+    def obter_modo_pesquisa_pc(self):
+        valor = self.pc_modo_pesquisa.get().strip().lower()
+
+        if valor.startswith("simult"):
+            return "simultaneo"
+
+        return "sequencial"
+
+    # =========================================================
+
     def log(self, texto):
         if "META DE PONTOS ATINGIDA" in texto:
             self.terminal.insert(END, f"{texto}\n", "verde")
@@ -941,6 +967,12 @@ class App(ctk.CTk):
             self.entry_path.insert(0, config.get("browser_path", DEFAULT_BROWSER_PATH))
 
             self.auto_inicio.set(config.get("auto_inicio", False))
+            modo_pc = config.get("pc_modo_pesquisa", "sequencial")
+            self.pc_modo_pesquisa.set(
+                "Simultanea"
+                if str(modo_pc).lower().startswith("simult")
+                else "Sequencial"
+            )
 
             self.entry_android_adb.delete(0, "end")
             self.entry_android_adb.insert(0, config.get("android_adb_path", "adb"))
@@ -949,14 +981,20 @@ class App(ctk.CTk):
             self.entry_android_serial.insert(0, config.get("android_serial", ""))
 
             self.combo_android_buscador.set(config.get("android_buscador", "Google"))
-            self.combo_android_navegador.set(
-                config.get("android_navegador", "Padrao do Android")
-            )
 
             navegadores_android = config.get("android_navegadores", [])
 
             if isinstance(navegadores_android, str):
                 navegadores_android = [navegadores_android]
+
+            navegador_antigo = config.get("android_navegador", "")
+
+            if (
+                not navegadores_android
+                and navegador_antigo
+                and navegador_antigo != "Padrao do Android"
+            ):
+                navegadores_android = [navegador_antigo]
 
             for nome, var in self.android_navegador_vars.items():
                 var.set(nome in navegadores_android)
@@ -1003,11 +1041,11 @@ class App(ctk.CTk):
                 "tempo_login": int(self.entry_login.get()),
                 "browser_path": self.entry_path.get(),
                 "auto_inicio": self.auto_inicio.get(),
+                "pc_modo_pesquisa": self.obter_modo_pesquisa_pc(),
                 "niveis": [var.get() for var in self.niveis_vars],
                 "android_adb_path": self.entry_android_adb.get(),
                 "android_serial": self.entry_android_serial.get(),
                 "android_buscador": self.combo_android_buscador.get(),
-                "android_navegador": self.combo_android_navegador.get(),
                 "android_navegadores": self.obter_navegadores_android_marcados(),
                 "android_quantidade": int(self.entry_android_quantidade.get()),
                 "android_delay": float(
