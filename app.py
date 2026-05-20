@@ -21,21 +21,11 @@ class App(ctk.CTk):
         super().__init__()
 
         self.title("Auto Pesquisa - Bing")
-        self.geometry("540x640")
-        self.minsize(500, 590)
-        self.centralizar_janela(540, 640)
-
-        self.cor_principal = "#38bdf8"
-        self.cor_secundaria = "#10b981"
-        self.cor_bg = "#0f172a"
-        self.cor_card = "#111827"
-        self.cor_card_claro = "#182235"
-        self.cor_input = "#0b1220"
-        self.cor_borda = "#263449"
-        self.cor_texto = "#e5edf6"
-        self.cor_texto_suave = "#94a3b8"
-
-        self.configure(fg_color=self.cor_bg)
+        self.tema_visual = self.obter_tema_inicial()
+        self.aplicar_tema_visual(self.tema_visual)
+        self.geometry(self.janela_tamanho)
+        self.minsize(*self.janela_minima)
+        self.centralizar_janela(*self.janela_dimensoes)
 
         self.attributes("-topmost", True)
         self.bind("<Unmap>", lambda e: self.attributes("-topmost", False))
@@ -54,6 +44,104 @@ class App(ctk.CTk):
         self.atualizar_niveis()
         self.atualizar_botoes()
         self.log("[SISTEMA] Interface carregada com sucesso.")
+
+    # =========================================================
+
+    def obter_tema_inicial(self):
+        try:
+            config = carregar_config()
+            tema = config.get("tema_visual", "editor")
+        except Exception:
+            tema = "editor"
+
+        if tema not in ("editor", "classico"):
+            return "editor"
+
+        return tema
+
+    # =========================================================
+
+    def aplicar_tema_visual(self, tema):
+        if tema == "classico":
+            self.tema_visual = "classico"
+            self.janela_dimensoes = (540, 640)
+            self.janela_minima = (500, 590)
+            self.altura_topo = 82
+            self.titulo_topo = "Auto Pesquisa Bing"
+            self.subtitulo_topo = "Automacao de pesquisas com perfis separados"
+            self.fonte_titulo = ("Segoe UI", 23, "bold")
+            self.fonte_subtitulo = ("Segoe UI", 11)
+            self.tabs_pady = (14, 10)
+            self.raio_card = 16
+            self.raio_painel = 12
+            self.raio_input = 9
+            self.raio_botao = 9
+            self.pad_externo = 18
+            self.pad_interno = 16
+            self.pad_secao = 20
+            self.cor_principal = "#38bdf8"
+            self.cor_secundaria = "#10b981"
+            self.hover_secundaria = "#059669"
+            self.cor_bg = "#0f172a"
+            self.cor_card = "#111827"
+            self.cor_card_claro = "#182235"
+            self.cor_input = "#0b1220"
+            self.cor_borda = "#263449"
+            self.cor_texto = "#e5edf6"
+            self.cor_texto_suave = "#94a3b8"
+            self.cor_console = "#070d18"
+            self.cor_console_texto = "#7dd3fc"
+            self.cor_sucesso = "#22c55e"
+            self.cor_erro = "#fb7185"
+            self.cor_info = "#60a5fa"
+            self.cor_botao_neutro = "#2563eb"
+            self.hover_botao_neutro = "#1d4ed8"
+            self.cor_botao_iniciar = "#0891b2"
+            self.hover_botao_iniciar = "#0e7490"
+            self.cor_botao_parar = "#e11d48"
+            self.hover_botao_parar = "#be123c"
+        else:
+            self.tema_visual = "editor"
+            self.janela_dimensoes = (620, 670)
+            self.janela_minima = (560, 620)
+            self.altura_topo = 44
+            self.titulo_topo = "Auto Pesquisa"
+            self.subtitulo_topo = "Bing automation panel"
+            self.fonte_titulo = ("Segoe UI", 13, "bold")
+            self.fonte_subtitulo = ("Segoe UI", 10)
+            self.tabs_pady = (8, 10)
+            self.raio_card = 5
+            self.raio_painel = 5
+            self.raio_input = 5
+            self.raio_botao = 5
+            self.pad_externo = 12
+            self.pad_interno = 12
+            self.pad_secao = 14
+            self.cor_principal = "#c8a94a"
+            self.cor_secundaria = "#9a7a2f"
+            self.hover_secundaria = "#b08d38"
+            self.cor_bg = "#050606"
+            self.cor_card = "#0a0b0c"
+            self.cor_card_claro = "#101113"
+            self.cor_input = "#070808"
+            self.cor_borda = "#191b1f"
+            self.cor_texto = "#d7d7d7"
+            self.cor_texto_suave = "#777b82"
+            self.cor_console = "#050606"
+            self.cor_console_texto = "#a7abb3"
+            self.cor_sucesso = "#6fbf73"
+            self.cor_erro = "#d9534f"
+            self.cor_info = "#8b8f99"
+            self.cor_botao_neutro = "#1d1f24"
+            self.hover_botao_neutro = "#272a31"
+            self.cor_botao_iniciar = "#17321c"
+            self.hover_botao_iniciar = "#214728"
+            self.cor_botao_parar = "#341316"
+            self.hover_botao_parar = "#461b1f"
+
+        largura, altura = self.janela_dimensoes
+        self.janela_tamanho = f"{largura}x{altura}"
+        self.configure(fg_color=self.cor_bg)
 
     # =========================================================
 
@@ -84,31 +172,55 @@ class App(ctk.CTk):
             self,
             fg_color=self.cor_card,
             corner_radius=0,
-            height=82
+            height=self.altura_topo
         )
         self.topo.pack(fill="x")
+        self.topo.pack_propagate(False)
+
+        self.topo.grid_columnconfigure(1, weight=1)
 
         self.titulo = ctk.CTkLabel(
             self.topo,
-            text="Auto Pesquisa Bing",
-            font=("Segoe UI", 23, "bold"),
+            text=self.titulo_topo,
+            font=self.fonte_titulo,
             text_color=self.cor_texto
         )
-        self.titulo.pack(pady=(10, 0))
 
         self.subtitulo = ctk.CTkLabel(
             self.topo,
-            text="Automacao de pesquisas com perfis separados",
-            font=("Segoe UI", 11),
+            text=self.subtitulo_topo,
+            font=self.fonte_subtitulo,
             text_color=self.cor_texto_suave
         )
-        self.subtitulo.pack()
 
-        ctk.CTkFrame(
+        texto_tema = "Tema: Editor" if self.tema_visual == "editor" else "Tema: Classico"
+        self.btn_tema = ctk.CTkButton(
             self.topo,
-            fg_color=self.cor_secundaria,
-            height=3
-        ).pack(fill="x", padx=76, pady=(9, 0))
+            text=texto_tema,
+            width=112,
+            height=28,
+            corner_radius=self.raio_botao,
+            fg_color=self.cor_input,
+            hover_color=self.cor_borda,
+            text_color=self.cor_texto,
+            font=("Segoe UI", 10, "bold"),
+            command=self.alternar_tema_visual
+        )
+
+        if self.tema_visual == "classico":
+            self.topo.grid_columnconfigure(0, weight=1)
+            self.titulo.grid(row=0, column=0, padx=(126, 12), pady=(10, 0), sticky="ew")
+            self.subtitulo.grid(row=1, column=0, padx=(126, 12), pady=(0, 4), sticky="ew")
+            self.btn_tema.grid(row=0, column=1, rowspan=2, padx=14, pady=10, sticky="e")
+            ctk.CTkFrame(
+                self.topo,
+                fg_color=self.cor_secundaria,
+                height=3
+            ).grid(row=2, column=0, columnspan=2, padx=76, pady=(0, 0), sticky="ew")
+        else:
+            self.titulo.grid(row=0, column=0, padx=14, pady=10, sticky="w")
+            self.subtitulo.grid(row=0, column=1, padx=8, pady=10, sticky="w")
+            self.btn_tema.grid(row=0, column=2, padx=14, pady=8, sticky="e")
 
     # =========================================================
 
@@ -118,7 +230,7 @@ class App(ctk.CTk):
             fg_color=self.cor_bg,
             segmented_button_fg_color=self.cor_card,
             segmented_button_selected_color=self.cor_secundaria,
-            segmented_button_selected_hover_color="#059669",
+            segmented_button_selected_hover_color=self.hover_secundaria,
             segmented_button_unselected_color=self.cor_input,
             segmented_button_unselected_hover_color=self.cor_borda,
             text_color=self.cor_texto
@@ -126,8 +238,8 @@ class App(ctk.CTk):
         self.tabs.pack(
             fill="both",
             expand=True,
-            padx=18,
-            pady=(14, 10)
+            padx=self.pad_externo,
+            pady=self.tabs_pady
         )
         self.tabs.add("PC")
         self.tabs.add("Android")
@@ -135,7 +247,7 @@ class App(ctk.CTk):
         self.container = ctk.CTkScrollableFrame(
             self.tabs.tab("PC"),
             fg_color=self.cor_card,
-            corner_radius=16,
+            corner_radius=self.raio_card,
             border_width=1,
             border_color=self.cor_borda
         )
@@ -149,24 +261,24 @@ class App(ctk.CTk):
         self.status_frame = ctk.CTkFrame(
             self.container,
             fg_color=self.cor_input,
-            corner_radius=12,
+            corner_radius=self.raio_painel,
             border_width=1,
             border_color=self.cor_borda
         )
-        self.status_frame.pack(fill="x", padx=16, pady=(10, 8))
+        self.status_frame.pack(fill="x", padx=self.pad_interno, pady=(8, 8))
 
         self.status = ctk.CTkLabel(
             self.status_frame,
             text="PARADO",
-            font=("Segoe UI", 13, "bold"),
-            text_color="#fb7185"
+            font=("Segoe UI", 11, "bold"),
+            text_color=self.cor_erro
         )
-        self.status.pack(pady=8)
+        self.status.pack(pady=7)
 
         self.criar_secao("Configuracoes", self.container)
 
         self.frame_inputs = ctk.CTkFrame(self.container, fg_color="transparent")
-        self.frame_inputs.pack(fill="x", padx=16, pady=(0, 6))
+        self.frame_inputs.pack(fill="x", padx=self.pad_interno, pady=(0, 6))
         self.frame_inputs.grid_columnconfigure((0, 1), weight=1)
 
         self.criar_input(self.frame_inputs, "Navegadores", "navegadores", "4", 0)
@@ -178,7 +290,7 @@ class App(ctk.CTk):
         self.criar_secao("Nivel de Cada Navegador", self.container)
 
         self.frame_niveis = ctk.CTkFrame(self.container, fg_color="transparent")
-        self.frame_niveis.pack(fill="x", padx=16, pady=(0, 8))
+        self.frame_niveis.pack(fill="x", padx=self.pad_interno, pady=(0, 8))
 
         self.auto_inicio = ctk.BooleanVar(value=False)
         self.checkbox_auto = ctk.CTkCheckBox(
@@ -190,11 +302,11 @@ class App(ctk.CTk):
             checkbox_width=17,
             checkbox_height=17,
             fg_color=self.cor_secundaria,
-            hover_color="#059669",
+            hover_color=self.hover_secundaria,
             border_color=self.cor_borda,
             command=self.checkbox_evento
         )
-        self.checkbox_auto.pack(anchor="w", padx=20, pady=(4, 12))
+        self.checkbox_auto.pack(anchor="w", padx=self.pad_secao, pady=(4, 12))
 
         self.criar_secao("Modo de Pesquisa", self.container)
 
@@ -204,28 +316,28 @@ class App(ctk.CTk):
             variable=self.pc_modo_pesquisa,
             command=lambda valor: self.salvar_config(),
             height=36,
-            corner_radius=9,
+            corner_radius=self.raio_botao,
             selected_color=self.cor_secundaria,
-            selected_hover_color="#059669",
+            selected_hover_color=self.hover_secundaria,
             unselected_color=self.cor_input,
             unselected_hover_color=self.cor_borda,
             text_color=self.cor_texto,
             font=("Segoe UI", 11, "bold")
         )
-        self.segmento_pc_modo.pack(fill="x", padx=20, pady=(0, 12))
+        self.segmento_pc_modo.pack(fill="x", padx=self.pad_secao, pady=(0, 12))
 
         self.frame_botoes = ctk.CTkFrame(self.container, fg_color="transparent")
-        self.frame_botoes.pack(fill="x", padx=16, pady=(2, 10))
+        self.frame_botoes.pack(fill="x", padx=self.pad_interno, pady=(2, 10))
         self.frame_botoes.grid_columnconfigure((0, 1), weight=1)
 
         self.btn_abrir = ctk.CTkButton(
             self.frame_botoes,
             text="Abrir navegadores",
-            height=42,
-            corner_radius=9,
-            font=("Segoe UI", 12, "bold"),
+            height=38,
+            corner_radius=self.raio_botao,
+            font=("Segoe UI", 11, "bold"),
             fg_color=self.cor_secundaria,
-            hover_color="#059669",
+            hover_color=self.hover_secundaria,
             command=self.iniciar
         )
         self.btn_abrir.grid(
@@ -240,22 +352,22 @@ class App(ctk.CTk):
         self.btn_iniciar = ctk.CTkButton(
             self.frame_botoes,
             text="Iniciar",
-            height=40,
-            corner_radius=9,
-            font=("Segoe UI", 12, "bold"),
-            fg_color="#2563eb",
-            hover_color="#1d4ed8",
+            height=36,
+            corner_radius=self.raio_botao,
+            font=("Segoe UI", 11, "bold"),
+            fg_color=self.cor_botao_neutro,
+            hover_color=self.hover_botao_neutro,
             command=self.enviar_enter
         )
 
         self.btn_parar = ctk.CTkButton(
             self.frame_botoes,
             text="Parar",
-            height=40,
-            corner_radius=9,
-            font=("Segoe UI", 12, "bold"),
-            fg_color="#e11d48",
-            hover_color="#be123c",
+            height=36,
+            corner_radius=self.raio_botao,
+            font=("Segoe UI", 11, "bold"),
+            fg_color=self.cor_botao_parar,
+            hover_color=self.hover_botao_parar,
             command=self.parar
         )
 
@@ -267,14 +379,14 @@ class App(ctk.CTk):
         self.terminal = ctk.CTkTextbox(
             self.container,
             height=220,
-            corner_radius=12,
-            fg_color="#070d18",
+            corner_radius=self.raio_painel,
+            fg_color=self.cor_console,
             font=("Consolas", 11),
-            text_color="#7dd3fc",
+            text_color=self.cor_console_texto,
             border_width=1,
             border_color=self.cor_borda
         )
-        self.terminal.pack(fill="both", expand=True, padx=16, pady=(4, 14))
+        self.terminal.pack(fill="both", expand=True, padx=self.pad_interno, pady=(4, 12))
 
         self.criar_conteudo_android(self.tabs.tab("Android"))
 
@@ -284,7 +396,7 @@ class App(ctk.CTk):
         self.android_container = ctk.CTkScrollableFrame(
             parent,
             fg_color=self.cor_card,
-            corner_radius=16,
+            corner_radius=self.raio_card,
             border_width=1,
             border_color=self.cor_borda
         )
@@ -300,16 +412,16 @@ class App(ctk.CTk):
         self.android_status = ctk.CTkLabel(
             self.android_container,
             text="ADB nao verificado",
-            font=("Segoe UI", 12, "bold"),
+            font=("Segoe UI", 11, "bold"),
             text_color=self.cor_texto_suave
         )
-        self.android_status.pack(anchor="w", padx=20, pady=(0, 8))
+        self.android_status.pack(anchor="w", padx=self.pad_secao, pady=(0, 8))
 
         self.android_grid = ctk.CTkFrame(
             self.android_container,
             fg_color="transparent"
         )
-        self.android_grid.pack(fill="x", padx=16, pady=(0, 8))
+        self.android_grid.pack(fill="x", padx=self.pad_interno, pady=(0, 8))
         self.android_grid.grid_columnconfigure((0, 1), weight=1)
 
         self.entry_android_adb = self.criar_entry_android(
@@ -331,7 +443,7 @@ class App(ctk.CTk):
             self.android_container,
             fg_color="transparent"
         )
-        self.frame_android_opcoes.pack(fill="x", padx=16, pady=(0, 8))
+        self.frame_android_opcoes.pack(fill="x", padx=self.pad_interno, pady=(0, 8))
         self.frame_android_opcoes.grid_columnconfigure(0, weight=1)
 
         self.combo_android_buscador = self.criar_combo_android(
@@ -348,11 +460,11 @@ class App(ctk.CTk):
         self.frame_android_navegadores = ctk.CTkFrame(
             self.android_container,
             fg_color=self.cor_input,
-            corner_radius=12,
+            corner_radius=self.raio_painel,
             border_width=1,
             border_color=self.cor_borda
         )
-        self.frame_android_navegadores.pack(fill="x", padx=16, pady=(4, 10))
+        self.frame_android_navegadores.pack(fill="x", padx=self.pad_interno, pady=(4, 10))
         self.frame_android_navegadores.grid_columnconfigure((0, 1), weight=1)
 
         navegadores_alternaveis = [
@@ -371,10 +483,10 @@ class App(ctk.CTk):
                 text=nome,
                 variable=var,
                 command=self.salvar_config,
-                corner_radius=6,
+                corner_radius=self.raio_input,
                 border_width=2,
                 fg_color=self.cor_secundaria,
-                hover_color="#059669",
+                hover_color=self.hover_secundaria,
                 text_color=self.cor_texto,
                 font=("Segoe UI", 11)
             )
@@ -390,7 +502,7 @@ class App(ctk.CTk):
             self.android_container,
             fg_color="transparent"
         )
-        self.frame_android_execucao.pack(fill="x", padx=16, pady=(0, 8))
+        self.frame_android_execucao.pack(fill="x", padx=self.pad_interno, pady=(0, 8))
         self.frame_android_execucao.grid_columnconfigure((0, 1), weight=1)
 
         self.entry_android_quantidade = self.criar_entry_android(
@@ -420,17 +532,17 @@ class App(ctk.CTk):
         self.texto_android_pesquisas = ctk.CTkTextbox(
             self.android_container,
             height=130,
-            corner_radius=12,
-            fg_color="#070d18",
+            corner_radius=self.raio_painel,
+            fg_color=self.cor_console,
             font=("Consolas", 11),
-            text_color="#7dd3fc",
+            text_color=self.cor_console_texto,
             border_width=1,
             border_color=self.cor_borda
         )
         self.texto_android_pesquisas.pack(
             fill="both",
             expand=True,
-            padx=16,
+            padx=self.pad_interno,
             pady=(4, 10)
         )
 
@@ -438,17 +550,17 @@ class App(ctk.CTk):
             self.android_container,
             fg_color="transparent"
         )
-        self.frame_android_botoes.pack(fill="x", padx=16, pady=(0, 10))
+        self.frame_android_botoes.pack(fill="x", padx=self.pad_interno, pady=(0, 10))
         self.frame_android_botoes.grid_columnconfigure((0, 1), weight=1)
 
         self.btn_android_verificar = ctk.CTkButton(
             self.frame_android_botoes,
             text="Verificar ADB",
-            height=38,
-            corner_radius=9,
-            font=("Segoe UI", 12, "bold"),
+            height=36,
+            corner_radius=self.raio_botao,
+            font=("Segoe UI", 11, "bold"),
             fg_color=self.cor_secundaria,
-            hover_color="#059669",
+            hover_color=self.hover_secundaria,
             command=self.verificar_android
         )
         self.btn_android_verificar.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
@@ -456,11 +568,11 @@ class App(ctk.CTk):
         self.btn_android_gerar = ctk.CTkButton(
             self.frame_android_botoes,
             text="Gerar lista",
-            height=38,
-            corner_radius=9,
-            font=("Segoe UI", 12, "bold"),
-            fg_color="#2563eb",
-            hover_color="#1d4ed8",
+            height=36,
+            corner_radius=self.raio_botao,
+            font=("Segoe UI", 11, "bold"),
+            fg_color=self.cor_botao_neutro,
+            hover_color=self.hover_botao_neutro,
             command=self.gerar_lista_android
         )
         self.btn_android_gerar.grid(row=0, column=1, padx=4, pady=4, sticky="ew")
@@ -468,11 +580,11 @@ class App(ctk.CTk):
         self.btn_android_iniciar = ctk.CTkButton(
             self.frame_android_botoes,
             text="Iniciar",
-            height=38,
-            corner_radius=9,
-            font=("Segoe UI", 12, "bold"),
-            fg_color="#0891b2",
-            hover_color="#0e7490",
+            height=36,
+            corner_radius=self.raio_botao,
+            font=("Segoe UI", 11, "bold"),
+            fg_color=self.cor_botao_iniciar,
+            hover_color=self.hover_botao_iniciar,
             command=self.iniciar_android
         )
         self.btn_android_iniciar.grid(row=1, column=0, padx=4, pady=4, sticky="ew")
@@ -480,11 +592,11 @@ class App(ctk.CTk):
         self.btn_android_parar = ctk.CTkButton(
             self.frame_android_botoes,
             text="Parar",
-            height=38,
-            corner_radius=9,
-            font=("Segoe UI", 12, "bold"),
-            fg_color="#e11d48",
-            hover_color="#be123c",
+            height=36,
+            corner_radius=self.raio_botao,
+            font=("Segoe UI", 11, "bold"),
+            fg_color=self.cor_botao_parar,
+            hover_color=self.hover_botao_parar,
             command=self.parar_android
         )
         self.btn_android_parar.grid(row=1, column=1, padx=4, pady=4, sticky="ew")
@@ -494,18 +606,18 @@ class App(ctk.CTk):
         self.console_android = ctk.CTkTextbox(
             self.android_container,
             height=160,
-            corner_radius=12,
-            fg_color="#070d18",
+            corner_radius=self.raio_painel,
+            fg_color=self.cor_console,
             font=("Consolas", 11),
-            text_color="#7dd3fc",
+            text_color=self.cor_console_texto,
             border_width=1,
             border_color=self.cor_borda
         )
         self.console_android.pack(
             fill="both",
             expand=True,
-            padx=16,
-            pady=(4, 14)
+            padx=self.pad_interno,
+            pady=(4, 12)
         )
 
     # =========================================================
@@ -518,13 +630,13 @@ class App(ctk.CTk):
             frame,
             text=texto,
             font=("Segoe UI", 11, "bold"),
-            text_color=self.cor_texto
+            text_color=self.cor_texto_suave
         ).pack(anchor="w", pady=(0, 3))
 
         entry = ctk.CTkEntry(
             frame,
-            height=36,
-            corner_radius=9,
+            height=34,
+            corner_radius=self.raio_input,
             border_width=1,
             border_color=self.cor_borda,
             fg_color=self.cor_input,
@@ -546,19 +658,19 @@ class App(ctk.CTk):
             frame,
             text=texto,
             font=("Segoe UI", 11, "bold"),
-            text_color=self.cor_texto
+            text_color=self.cor_texto_suave
         ).pack(anchor="w", pady=(0, 3))
 
         combo = ctk.CTkComboBox(
             frame,
             values=valores,
-            height=36,
-            corner_radius=9,
+            height=34,
+            corner_radius=self.raio_input,
             border_width=1,
             border_color=self.cor_borda,
             fg_color=self.cor_input,
             button_color=self.cor_secundaria,
-            button_hover_color="#059669",
+            button_hover_color=self.hover_secundaria,
             dropdown_fg_color=self.cor_card_claro,
             dropdown_hover_color=self.cor_borda,
             text_color=self.cor_texto,
@@ -653,7 +765,7 @@ class App(ctk.CTk):
                 if not dispositivos:
                     mensagem = "Nenhum Android conectado"
                     self.log_android("[ANDROID] Nenhum dispositivo listado.")
-                    cor = "#fb7185"
+                    cor = self.cor_erro
                 else:
                     partes = [
                         f"{item['serial']} ({item['estado']})"
@@ -669,7 +781,7 @@ class App(ctk.CTk):
                 self.log_android(f"[ANDROID][ERRO] {e}")
                 self.atualizar_status_android(
                     "ADB nao encontrado ou sem permissao",
-                    "#fb7185"
+                    self.cor_erro
                 )
 
         threading.Thread(target=rodar, daemon=True).start()
@@ -727,7 +839,7 @@ class App(ctk.CTk):
             )
             self.atualizar_status_android(
                 "Selecione um navegador Android",
-                "#fb7185"
+                self.cor_erro
             )
             return
 
@@ -754,14 +866,14 @@ class App(ctk.CTk):
                 )
                 self.atualizar_status_android(
                     "Automacao Android finalizada",
-                    "#60a5fa"
+                    self.cor_info
                 )
 
             except Exception as e:
                 self.log_android(f"[ANDROID][ERRO] {e}")
                 self.atualizar_status_android(
                     "Erro na automacao Android",
-                    "#fb7185"
+                    self.cor_erro
                 )
 
         self.android_thread = threading.Thread(target=rodar, daemon=True)
@@ -787,7 +899,7 @@ class App(ctk.CTk):
             font=("Segoe UI", 11, "bold"),
             text_color=self.cor_principal
         )
-        label.pack(anchor="w", padx=20, pady=(10, 4))
+        label.pack(anchor="w", padx=self.pad_secao, pady=(10, 4))
 
     # =========================================================
 
@@ -799,13 +911,13 @@ class App(ctk.CTk):
             frame,
             text=texto,
             font=("Segoe UI", 11, "bold"),
-            text_color=self.cor_texto
+            text_color=self.cor_texto_suave
         ).pack(anchor="w", pady=(0, 3))
 
         entry = ctk.CTkEntry(
             frame,
-            height=36,
-            corner_radius=9,
+            height=34,
+            corner_radius=self.raio_input,
             border_width=1,
             border_color=self.cor_borda,
             fg_color=self.cor_input,
@@ -825,20 +937,20 @@ class App(ctk.CTk):
             self.container,
             text=texto,
             font=("Segoe UI", 11, "bold"),
-            text_color=self.cor_texto
-        ).pack(anchor="w", padx=20, pady=(8, 3))
+            text_color=self.cor_texto_suave
+        ).pack(anchor="w", padx=self.pad_secao, pady=(8, 3))
 
         self.entry_path = ctk.CTkEntry(
             self.container,
-            height=36,
-            corner_radius=9,
+            height=34,
+            corner_radius=self.raio_input,
             border_width=1,
             border_color=self.cor_borda,
             fg_color=self.cor_input,
             text_color=self.cor_texto,
             font=("Segoe UI", 11)
         )
-        self.entry_path.pack(fill="x", padx=20)
+        self.entry_path.pack(fill="x", padx=self.pad_secao)
         self.entry_path.insert(
             0,
             DEFAULT_BROWSER_PATH
@@ -864,7 +976,7 @@ class App(ctk.CTk):
             frame = ctk.CTkFrame(
                 self.frame_niveis,
                 fg_color=self.cor_card_claro,
-                corner_radius=10,
+                corner_radius=self.raio_painel,
                 height=42,
                 border_width=1,
                 border_color=self.cor_borda
@@ -891,12 +1003,12 @@ class App(ctk.CTk):
                 variable=var,
                 width=90,
                 height=30,
-                corner_radius=8,
+                corner_radius=self.raio_input,
                 border_width=1,
                 border_color=self.cor_borda,
                 fg_color=self.cor_input,
                 button_color=self.cor_secundaria,
-                button_hover_color="#059669",
+                button_hover_color=self.hover_secundaria,
                 dropdown_fg_color=self.cor_card_claro,
                 dropdown_hover_color=self.cor_borda,
                 font=("Segoe UI", 11),
@@ -912,6 +1024,42 @@ class App(ctk.CTk):
     def checkbox_evento(self):
         self.atualizar_botoes()
         self.salvar_config()
+
+    # =========================================================
+
+    def alternar_tema_visual(self):
+        processo_ativo = self.processo and self.processo.poll() is None
+        android_ativo = self.android_thread and self.android_thread.is_alive()
+
+        if processo_ativo or android_ativo:
+            self.log("[SISTEMA] Pare a automacao antes de trocar o tema.")
+            return
+
+        novo_tema = "classico" if self.tema_visual == "editor" else "editor"
+
+        try:
+            self.salvar_config()
+            config = carregar_config()
+            config["tema_visual"] = novo_tema
+            salvar_config(config)
+        except Exception:
+            pass
+
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        self.niveis_vars.clear()
+        self.android_navegador_vars.clear()
+        self.aplicar_tema_visual(novo_tema)
+        self.geometry(self.janela_tamanho)
+        self.minsize(*self.janela_minima)
+        self.centralizar_janela(*self.janela_dimensoes)
+        self.criar_topo()
+        self.criar_conteudo()
+        self.carregar_config()
+        self.atualizar_niveis()
+        self.atualizar_botoes()
+        self.log(f"[SISTEMA] Tema visual alterado para {novo_tema}.")
 
     # =========================================================
 
@@ -931,7 +1079,7 @@ class App(ctk.CTk):
         else:
             self.terminal.insert(END, f"{texto}\n")
 
-        self.terminal.tag_config("verde", foreground="#22c55e")
+        self.terminal.tag_config("verde", foreground=self.cor_sucesso)
         self.terminal.see("end")
 
     # =========================================================
@@ -1041,6 +1189,7 @@ class App(ctk.CTk):
                 "tempo_login": int(self.entry_login.get()),
                 "browser_path": self.entry_path.get(),
                 "auto_inicio": self.auto_inicio.get(),
+                "tema_visual": self.tema_visual,
                 "pc_modo_pesquisa": self.obter_modo_pesquisa_pc(),
                 "niveis": [var.get() for var in self.niveis_vars],
                 "android_adb_path": self.entry_android_adb.get(),
@@ -1068,7 +1217,7 @@ class App(ctk.CTk):
     # =========================================================
 
     def iniciar(self):
-        self.status.configure(text="EXECUTANDO", text_color="#22c55e")
+        self.status.configure(text="EXECUTANDO", text_color=self.cor_sucesso)
         self.btn_abrir.configure(state="disabled")
         self.log("[SISTEMA] Abrindo navegadores...")
 
@@ -1113,7 +1262,7 @@ class App(ctk.CTk):
     # =========================================================
 
     def finalizar_execucao(self):
-        self.status.configure(text="FINALIZADO", text_color="#60a5fa")
+        self.status.configure(text="FINALIZADO", text_color=self.cor_info)
         self.btn_abrir.configure(state="normal")
 
     # =========================================================
@@ -1139,7 +1288,7 @@ class App(ctk.CTk):
             except Exception:
                 pass
 
-            self.status.configure(text="PARADO", text_color="#fb7185")
+            self.status.configure(text="PARADO", text_color=self.cor_erro)
             self.btn_abrir.configure(state="normal")
 
     # =========================================================

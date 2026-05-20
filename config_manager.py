@@ -12,6 +12,7 @@ def config_padrao():
         "tempo_login": 5,
         "browser_path": DEFAULT_BROWSER_PATH,
         "auto_inicio": False,
+        "tema_visual": "editor",
         "pc_modo_pesquisa": "sequencial",
         "niveis": ["1", "1", "1"],
         "android_adb_path": "adb",
