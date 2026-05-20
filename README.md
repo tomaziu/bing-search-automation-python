@@ -20,7 +20,6 @@ Automação de pesquisas no Bing utilizando Python + Playwright com interface mo
 - 👤 Perfis separados para cada navegador
 - 🎲 Pesquisas aleatórias humanizadas
 - 🛑 Controle de iniciar/parar processos
-- 📱 Modo celular assistido com página local, QR Code e contador de 60 pontos
 - 🤖 Automação Android via ADB para pesquisas comuns no navegador do celular
 
 ---
@@ -41,7 +40,6 @@ Automação de pesquisas no Bing utilizando Python + Playwright com interface mo
 - Python 3
 - Playwright
 - CustomTkinter
-- qrcode
 - ADB/Android Platform Tools para automação Android
 
 ---
@@ -98,18 +96,6 @@ No Windows, basta dar dois cliques no arquivo `iniciar_app.bat` dentro da pasta 
 | 2 | 90 pontos |
 
 Cada navegador pode possuir um nível diferente. Ao atingir a meta, o programa avisa no console e continua pesquisando.
-
----
-
-# 📱 Modo Celular Assistido
-
-| Meta | Pontos por pesquisa | Total |
-|------|---------------------|-------|
-| 60 pontos | 3 pontos | 20 pesquisas |
-
-A aba Celular cria um pacote de 20 pesquisas e gera um QR Code para uma página local no celular. No celular, toque em **Abrir pesquisa** para abrir a busca no Bing e depois em **Marcar feita e próxima** para sincronizar o progresso com o app no PC.
-
-O celular e o PC precisam estar na mesma rede. Se o Windows pedir acesso do firewall para o Python, permita na rede privada.
 
 ---
 
