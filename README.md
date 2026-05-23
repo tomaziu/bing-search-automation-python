@@ -1,171 +1,120 @@
-<p align="center">
-  <img src="auto_pesquisa_bing.png" alt="Descrição" width="300">
-</p>   
+# Bing Search Automation Python
 
-# 🚀 Auto Pesquisa Bing
+Aplicativo em Python para automatizar pesquisas no Bing pelo PC e executar pesquisas comuns em navegadores Android via ADB.
 
-Automação de pesquisas no Bing utilizando Python + Playwright com interface moderna em CustomTkinter.
+## Recursos
 
----
+- Interface desktop com CustomTkinter.
+- Automacao PC com Playwright.
+- Perfis separados por navegador no PC.
+- Modo sequencial ou simultaneo para pesquisas no PC.
+- Automacao Android via ADB.
+- Alternancia entre navegadores Android marcados.
+- Salvamento automatico das configuracoes.
+- Alternancia entre tema classico e tema editor.
 
-## ✨ Funcionalidades
+## Requisitos
 
-- 🌐 Abertura automática de múltiplos navegadores
-- 🎯 Sistema de níveis por navegador
-- ⚡ Pesquisas automáticas no Bing
-- 💾 Salvamento automático das configurações
-- 🖥️ Interface moderna e compacta
-- 📊 Console integrado em tempo real
-- 🔄 Suporte a auto início
-- 👤 Perfis separados para cada navegador
-- 🎲 Pesquisas aleatórias humanizadas
-- 🛑 Controle de iniciar/parar processos
-- 🤖 Automação Android via ADB para pesquisas comuns no navegador do celular
+- Windows 10/11.
+- Python 3.10 ou superior.
+- Microsoft Edge ou outro navegador Chromium instalado.
+- Android Platform Tools para usar a aba Android.
+- Um celular Android com Depuracao USB ativada, caso use ADB.
 
----
+## Instalacao
 
-# 🖼️ Interface
-
-## Tela Principal
-
-- Configuração rápida
-- Seleção de níveis
-- Controle de navegadores
-- Console em tempo real
-
----
-
-# 📦 Tecnologias Utilizadas
-
-- Python 3
-- Playwright
-- CustomTkinter
-- ADB/Android Platform Tools para automação Android
-
----
-
-# ⚙️ Instalação
-
-## 1️⃣ Clone o repositório
+Clone o repositorio:
 
 ```bash
-git clone https://github.com/tomaziu/auto-pesquisa-bing.git
+git clone https://github.com/tomaziu/bing-search-automation-python.git
+cd bing-search-automation-python
 ```
 
----
-
-## 2️⃣ Entre na pasta
-
-```bash
-cd auto-pesquisa-bing
-```
-
----
-
-## 3️⃣ Instale as dependências
+Instale as dependencias:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
----
+Se necessario, instale os navegadores do Playwright:
 
-# ▶️ Como usar
+```bash
+python -m playwright install
+```
 
-Execute:
+## Como executar
+
+Pelo terminal:
 
 ```bash
 python app.py
 ```
 
-Tambem e possivel iniciar pelo arquivo `.bat`:
+Ou pelo Windows:
 
 ```bat
 iniciar_app.bat
 ```
 
-No Windows, basta dar dois cliques no arquivo `iniciar_app.bat` dentro da pasta do projeto.
+## Aba PC
 
----
+1. Informe a quantidade de navegadores.
+2. Escolha o tempo de espera inicial.
+3. Confirme o caminho do navegador.
+4. Escolha o nivel de cada navegador.
+5. Escolha o modo de pesquisa:
+   - Sequencial: pesquisa navegador por navegador.
+   - Simultanea: executa uma rodada de pesquisa em todos os navegadores ao mesmo tempo.
+6. Clique em Abrir navegadores.
+7. Clique em Iniciar, ou marque Iniciar automaticamente.
 
-# 🧠 Sistema de Níveis
+## Aba Android
 
-| Nível | Meta de pontos |
-|------|----------------|
-| 1 | 30 pontos |
-| 2 | 90 pontos |
+A aba Android usa ADB para abrir o navegador no celular, tocar no campo de pesquisa, digitar o termo e pressionar Enter.
 
-Cada navegador pode possuir um nível diferente. Ao atingir a meta, o programa avisa no console e continua pesquisando.
+Passos basicos:
 
----
+1. Instale o Android Platform Tools no PC.
+2. Ative as Opcoes do desenvolvedor no Android.
+3. Ative Depuracao USB.
+4. Conecte o celular no PC e aceite a autorizacao RSA.
+5. No app, informe o caminho do `adb.exe`.
+6. Clique em Verificar ADB.
+7. Escolha o buscador.
+8. Marque pelo menos um navegador em Alternar Navegadores.
+9. Gere ou cole a lista de pesquisas.
+10. Clique em Iniciar.
 
-# 🤖 Automação Android
+Para conexao ADB sem fio ou pareamento local, uma opcao recomendada e o LADB Connect. Ele pode ajudar na configuracao do ADB no Android, especialmente quando voce estiver usando Depuracao sem fio.
 
-A aba Android usa ADB para abrir o navegador do celular, tocar no campo de pesquisa, digitar o termo e pressionar Enter.
+Se o comando `adb` nao estiver no PATH, use o caminho completo, por exemplo:
 
-Para usar:
+```text
+C:\Users\Admin\platform-tools\adb.exe
+```
 
-1. Instale o Android Platform Tools.
-2. Ative as Opções do desenvolvedor no Android.
-3. Ative Depuração USB.
-4. Conecte o celular no PC e aceite a autorização RSA na tela do celular.
-5. Na aba Android, clique em **Verificar ADB**.
-6. Gere ou cole uma lista de pesquisas.
-7. Escolha o buscador (Google, Bing, DuckDuckGo, Yahoo ou Startpage), marque pelo menos um navegador em **Alternar Navegadores**, ajuste o delay e o tempo de abertura.
-8. Clique em **Iniciar**.
+Teste rapido do ADB:
 
-Para alternar entre contas/navegadores no Android, marque os navegadores na seção **Alternar Navegadores**. Quando houver vários marcados, cada pesquisa será executada em todos eles, um por vez.
+```bash
+adb devices
+```
 
-## Contas separadas por navegador
+O dispositivo deve aparecer como `device`.
+
+## Contas por navegador no Android
 
 Para usar contas diferentes no mesmo celular:
 
-1. Instale os navegadores que pretende usar, como Chrome, Edge, Brave, Firefox e Bing.
-2. Abra cada navegador manualmente no celular uma vez.
-3. Faça login na conta desejada em cada navegador.
-4. Aceite telas iniciais, permissões ou termos que aparecerem.
-5. No app, marque esses navegadores em **Alternar Navegadores**.
-6. Clique em **Iniciar**.
+1. Instale os navegadores que pretende usar, como Chrome, Edge, Brave, Firefox ou Bing.
+2. Abra cada navegador manualmente uma vez.
+3. Faca login na conta desejada em cada navegador.
+4. Aceite telas iniciais, permissoes e termos.
+5. Marque os navegadores no app em Alternar Navegadores.
 
-O Android é controlado por ADB, então apenas um navegador fica em primeiro plano por vez. Por isso o app alterna automaticamente entre os navegadores marcados em vez de tentar executar todos ao mesmo tempo.
+O Android e controlado por ADB, entao apenas um navegador fica em primeiro plano por vez. Por isso o app alterna entre os navegadores marcados.
 
-Se o comando `adb` não estiver no PATH, coloque o caminho completo do `adb.exe` no campo ADB.
+## Observacoes
 
----
-
-# 🔒 Observações
-
-- O projeto utiliza perfis persistentes do navegador
-- Pode armazenar sessões e cookies localmente
-- Utilize com responsabilidade
-
----
-
-# 📌 Requisitos
-
-- Windows 10/11
-- Python 3.10+
-- Qualquer navegador compatível com Chromium
-
----
-
-# 👨‍💻 Autor
-
-Projeto desenvolvido por Thomaz de Morais Nunes.
-
----
-
-# ⭐ Contribuição
-
-Sinta-se livre para abrir:
-
-- Issues
-- Pull Requests
-- Sugestões
-- Melhorias
-
----
-
-# 📄 Licença
-
-Este projeto é apenas para fins educacionais.
+- O projeto usa perfis persistentes do navegador.
+- Sessoes e cookies podem ficar salvos localmente.
+- Use com responsabilidade.
