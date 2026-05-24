@@ -1,19 +1,20 @@
 # Changelog
 
-Todas as mudancas relevantes deste projeto serao documentadas neste arquivo.
+Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 ## Unreleased
 
-- README simplificado com instrucoes essenciais.
-- Guia de contribuicao adicionado.
-- Licenca MIT adicionada.
-- Testes basicos adicionados para configuracao, geracao de pesquisas e automacao Android.
+- README simplificado com instruções essenciais.
+- Guia de contribuição adicionado.
+- Licença MIT adicionada.
+- Testes básicos adicionados para configuração, geração de pesquisas e automação Android.
+- Textos da interface e documentação ajustados com acentuação em português.
 
 ## 2026-05-24
 
 - Interface com abas PC e Android.
-- Modo de pesquisa sequencial ou simultaneo no PC.
-- Console organizado para rodadas simultaneas.
-- Automacao Android via ADB.
-- Alternancia entre navegadores Android marcados.
-- Alternancia entre tema classico e tema editor.
+- Modo de pesquisa sequencial ou simultâneo no PC.
+- Console organizado para rodadas simultâneas.
+- Automação Android via ADB.
+- Alternância entre navegadores Android marcados.
+- Alternância entre tema clássico e tema editor.

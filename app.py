@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import END
+import os
 import subprocess
 import sys
 import threading
@@ -68,7 +69,7 @@ class App(ctk.CTk):
             self.janela_minima = (500, 590)
             self.altura_topo = 82
             self.titulo_topo = "Auto Pesquisa Bing"
-            self.subtitulo_topo = "Automacao de pesquisas com perfis separados"
+            self.subtitulo_topo = "Automação de pesquisas com perfis separados"
             self.fonte_titulo = ("Segoe UI", 23, "bold")
             self.fonte_subtitulo = ("Segoe UI", 11)
             self.tabs_pady = (14, 10)
@@ -106,7 +107,7 @@ class App(ctk.CTk):
             self.janela_minima = (560, 620)
             self.altura_topo = 44
             self.titulo_topo = "Auto Pesquisa"
-            self.subtitulo_topo = "Bing automation panel"
+            self.subtitulo_topo = "Painel de automação Bing"
             self.fonte_titulo = ("Segoe UI", 13, "bold")
             self.fonte_subtitulo = ("Segoe UI", 10)
             self.tabs_pady = (8, 10)
@@ -193,7 +194,7 @@ class App(ctk.CTk):
             text_color=self.cor_texto_suave
         )
 
-        texto_tema = "Tema: Editor" if self.tema_visual == "editor" else "Tema: Classico"
+        texto_tema = "Tema: Editor" if self.tema_visual == "editor" else "Tema: Clássico"
         self.btn_tema = ctk.CTkButton(
             self.topo,
             text=texto_tema,
@@ -275,7 +276,7 @@ class App(ctk.CTk):
         )
         self.status.pack(pady=7)
 
-        self.criar_secao("Configuracoes", self.container)
+        self.criar_secao("Configurações", self.container)
 
         self.frame_inputs = ctk.CTkFrame(self.container, fg_color="transparent")
         self.frame_inputs.pack(fill="x", padx=self.pad_interno, pady=(0, 6))
@@ -287,7 +288,7 @@ class App(ctk.CTk):
 
         self.criar_input_full("Caminho do Navegador")
 
-        self.criar_secao("Nivel de Cada Navegador", self.container)
+        self.criar_secao("Nível de Cada Navegador", self.container)
 
         self.frame_niveis = ctk.CTkFrame(self.container, fg_color="transparent")
         self.frame_niveis.pack(fill="x", padx=self.pad_interno, pady=(0, 8))
@@ -312,7 +313,7 @@ class App(ctk.CTk):
 
         self.segmento_pc_modo = ctk.CTkSegmentedButton(
             self.container,
-            values=["Sequencial", "Simultanea"],
+            values=["Sequencial", "Simultânea"],
             variable=self.pc_modo_pesquisa,
             command=lambda valor: self.salvar_config(),
             height=36,
@@ -407,11 +408,11 @@ class App(ctk.CTk):
             pady=(6, 0)
         )
 
-        self.criar_secao("Automacao Android", self.android_container)
+        self.criar_secao("Automação Android", self.android_container)
 
         self.android_status = ctk.CTkLabel(
             self.android_container,
-            text="ADB nao verificado",
+            text="ADB não verificado",
             font=("Segoe UI", 11, "bold"),
             text_color=self.cor_texto_suave
         )
@@ -780,7 +781,7 @@ class App(ctk.CTk):
             except Exception as e:
                 self.log_android(f"[ANDROID][ERRO] {e}")
                 self.atualizar_status_android(
-                    "ADB nao encontrado ou sem permissao",
+                    "ADB não encontrado ou sem permissão",
                     self.cor_erro
                 )
 
@@ -806,7 +807,7 @@ class App(ctk.CTk):
 
     def iniciar_android(self):
         if self.android_thread and self.android_thread.is_alive():
-            self.log_android("[ANDROID] Automacao ja esta em execucao.")
+            self.log_android("[ANDROID] Automação já está em execução.")
             return
 
         pesquisas = self.obter_pesquisas_android()
@@ -851,7 +852,7 @@ class App(ctk.CTk):
         def rodar():
             try:
                 self.atualizar_status_android(
-                    "Executando automacao Android",
+                    "Executando automação Android",
                     self.cor_secundaria
                 )
                 automator = AndroidSearchAutomator(adb_path, serial)
@@ -865,14 +866,14 @@ class App(ctk.CTk):
                     self.android_stop_event.is_set
                 )
                 self.atualizar_status_android(
-                    "Automacao Android finalizada",
+                    "Automação Android finalizada",
                     self.cor_info
                 )
 
             except Exception as e:
                 self.log_android(f"[ANDROID][ERRO] {e}")
                 self.atualizar_status_android(
-                    "Erro na automacao Android",
+                    "Erro na automação Android",
                     self.cor_erro
                 )
 
@@ -1032,7 +1033,7 @@ class App(ctk.CTk):
         android_ativo = self.android_thread and self.android_thread.is_alive()
 
         if processo_ativo or android_ativo:
-            self.log("[SISTEMA] Pare a automacao antes de trocar o tema.")
+            self.log("[SISTEMA] Pare a automação antes de trocar o tema.")
             return
 
         novo_tema = "classico" if self.tema_visual == "editor" else "editor"
@@ -1059,7 +1060,8 @@ class App(ctk.CTk):
         self.carregar_config()
         self.atualizar_niveis()
         self.atualizar_botoes()
-        self.log(f"[SISTEMA] Tema visual alterado para {novo_tema}.")
+        tema_exibicao = "clássico" if novo_tema == "classico" else "editor"
+        self.log(f"[SISTEMA] Tema visual alterado para {tema_exibicao}.")
 
     # =========================================================
 
@@ -1117,7 +1119,7 @@ class App(ctk.CTk):
             self.auto_inicio.set(config.get("auto_inicio", False))
             modo_pc = config.get("pc_modo_pesquisa", "sequencial")
             self.pc_modo_pesquisa.set(
-                "Simultanea"
+                "Simultânea"
                 if str(modo_pc).lower().startswith("simult")
                 else "Sequencial"
             )
@@ -1175,7 +1177,7 @@ class App(ctk.CTk):
                 if i < len(self.niveis_vars):
                     self.niveis_vars[i].set(str(nivel))
 
-            self.log("[CONFIG] Configuracoes carregadas.")
+            self.log("[CONFIG] Configurações carregadas.")
 
         except Exception as e:
             self.log(f"[ERRO] {e}")
@@ -1234,7 +1236,9 @@ class App(ctk.CTk):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
-                    encoding="cp1252"
+                    encoding="utf-8",
+                    errors="replace",
+                    env={**os.environ, "PYTHONIOENCODING": "utf-8"}
                 )
 
                 if self.auto_inicio.get():
@@ -1272,10 +1276,10 @@ class App(ctk.CTk):
             try:
                 self.processo.stdin.write("\n")
                 self.processo.stdin.flush()
-                self.log("[SISTEMA] Sinal de inicio enviado.")
+                self.log("[SISTEMA] Sinal de início enviado.")
 
             except Exception:
-                self.log("[ERRO] Nao foi possivel enviar comando.")
+                self.log("[ERRO] Não foi possível enviar comando.")
 
     # =========================================================
 
@@ -1283,7 +1287,7 @@ class App(ctk.CTk):
         if self.processo:
             try:
                 self.processo.terminate()
-                self.log("[SISTEMA] Processo parado pelo usuario.")
+                self.log("[SISTEMA] Processo parado pelo usuário.")
 
             except Exception:
                 pass

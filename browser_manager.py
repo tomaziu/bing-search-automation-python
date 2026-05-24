@@ -68,7 +68,7 @@ async def abrir_navegadores(playwright, total_navegadores, browser_path, niveis,
         log(
             f"[NAVEGADOR {indice + 1}] "
             f"Inicializado com sucesso "
-            f"(Nivel {nivel} - Meta {meta_pontos} pontos)"
+            f"(Nível {nivel} - Meta {meta_pontos} pontos)"
         )
 
     return navegadores

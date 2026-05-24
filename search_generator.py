@@ -3,9 +3,9 @@ import random
 
 PALAVRAS_INICIO = [
     "impacto",
-    "beneficios",
-    "avancos",
-    "historia",
+    "benefícios",
+    "avanços",
+    "história",
     "curiosidades",
     "o futuro"
 ]
@@ -14,16 +14,16 @@ PALAVRAS_TEMA = [
     "internet",
     "tecnologia",
     "astronomia",
-    "robotica",
-    "inteligencia artificial",
-    "programacao"
+    "robótica",
+    "inteligência artificial",
+    "programação"
 ]
 
 PALAVRAS_CONTEXTO = [
     "moderna",
     "atual",
     "digital",
-    "na educacao",
+    "na educação",
     "na sociedade",
     "em 2026"
 ]

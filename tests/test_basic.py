@@ -37,7 +37,7 @@ class AndroidAutomationTests(unittest.TestCase):
         automator = AndroidSearchAutomator()
 
         self.assertEqual(
-            automator.formatar_texto_adb("programacao avancada 2026!"),
+            automator.formatar_texto_adb("programação avançada 2026!"),
             "programacao%savancada%s2026"
         )
 

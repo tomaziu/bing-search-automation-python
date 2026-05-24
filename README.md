@@ -5,13 +5,13 @@ Aplicativo em Python para automatizar pesquisas no Bing pelo PC e executar pesqu
 ## Recursos
 
 - Interface desktop com CustomTkinter.
-- Automacao PC com Playwright.
+- Automação PC com Playwright.
 - Perfis separados por navegador no PC.
-- Modo sequencial ou simultaneo para pesquisas no PC.
-- Automacao Android via ADB.
-- Alternancia entre navegadores Android marcados.
-- Salvamento automatico das configuracoes.
-- Alternancia entre tema classico e tema editor.
+- Modo sequencial ou simultâneo para pesquisas no PC.
+- Automação Android via ADB.
+- Alternância entre navegadores Android marcados.
+- Salvamento automático das configurações.
+- Alternância entre tema clássico e tema editor.
 
 ## Requisitos
 
@@ -19,24 +19,24 @@ Aplicativo em Python para automatizar pesquisas no Bing pelo PC e executar pesqu
 - Python 3.10 ou superior.
 - Microsoft Edge ou outro navegador Chromium instalado.
 - Android Platform Tools para usar a aba Android.
-- Um celular Android com Depuracao USB ativada, caso use ADB.
+- Um celular Android com Depuração USB ativada, caso use ADB.
 
-## Instalacao
+## Instalação
 
-Clone o repositorio:
+Clone o repositório:
 
 ```bash
 git clone https://github.com/tomaziu/bing-search-automation-python.git
 cd bing-search-automation-python
 ```
 
-Instale as dependencias:
+Instale as dependências:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-Se necessario, instale os navegadores do Playwright:
+Se necessário, instale os navegadores do Playwright:
 
 ```bash
 python -m playwright install
@@ -58,7 +58,7 @@ iniciar_app.bat
 
 ## Testes
 
-Execute a validacao de sintaxe:
+Execute a validação de sintaxe:
 
 ```bash
 python -B -m py_compile app.py main.py rewards_runner.py browser_manager.py config_manager.py android_automation.py search_generator.py logger.py
@@ -75,10 +75,10 @@ python -m unittest discover -s tests
 1. Informe a quantidade de navegadores.
 2. Escolha o tempo de espera inicial.
 3. Confirme o caminho do navegador.
-4. Escolha o nivel de cada navegador.
+4. Escolha o nível de cada navegador.
 5. Escolha o modo de pesquisa:
    - Sequencial: pesquisa navegador por navegador.
-   - Simultanea: executa uma rodada de pesquisa em todos os navegadores ao mesmo tempo.
+   - Simultânea: executa uma rodada de pesquisa em todos os navegadores ao mesmo tempo.
 6. Clique em Abrir navegadores.
 7. Clique em Iniciar, ou marque Iniciar automaticamente.
 
@@ -86,12 +86,12 @@ python -m unittest discover -s tests
 
 A aba Android usa ADB para abrir o navegador no celular, tocar no campo de pesquisa, digitar o termo e pressionar Enter.
 
-Passos basicos:
+Passos básicos:
 
 1. Instale o Android Platform Tools no PC.
-2. Ative as Opcoes do desenvolvedor no Android.
-3. Ative Depuracao USB.
-4. Conecte o celular no PC e aceite a autorizacao RSA.
+2. Ative as Opções do desenvolvedor no Android.
+3. Ative Depuração USB.
+4. Conecte o celular no PC e aceite a autorização RSA.
 5. No app, informe o caminho do `adb.exe`.
 6. Clique em Verificar ADB.
 7. Escolha o buscador.
@@ -99,15 +99,15 @@ Passos basicos:
 9. Gere ou cole a lista de pesquisas.
 10. Clique em Iniciar.
 
-Para conexao ADB sem fio ou pareamento local, uma opcao recomendada e o LADB Connect. Ele pode ajudar na configuracao do ADB no Android, especialmente quando voce estiver usando Depuracao sem fio.
+Para conexão ADB sem fio ou pareamento local, uma opção recomendada é o LADB Connect. Ele pode ajudar na configuração do ADB no Android, especialmente quando você estiver usando Depuração sem fio.
 
-Se o comando `adb` nao estiver no PATH, use o caminho completo, por exemplo:
+Se o comando `adb` não estiver no PATH, use o caminho completo, por exemplo:
 
 ```text
 C:\Users\Admin\platform-tools\adb.exe
 ```
 
-Teste rapido do ADB:
+Teste rápido do ADB:
 
 ```bash
 adb devices
@@ -121,26 +121,26 @@ Para usar contas diferentes no mesmo celular:
 
 1. Instale os navegadores que pretende usar, como Chrome, Edge, Brave, Firefox ou Bing.
 2. Abra cada navegador manualmente uma vez.
-3. Faca login na conta desejada em cada navegador.
-4. Aceite telas iniciais, permissoes e termos.
+3. Faça login na conta desejada em cada navegador.
+4. Aceite telas iniciais, permissões e termos.
 5. Marque os navegadores no app em Alternar Navegadores.
 
-O Android e controlado por ADB, entao apenas um navegador fica em primeiro plano por vez. Por isso o app alterna entre os navegadores marcados.
+O Android é controlado por ADB, então apenas um navegador fica em primeiro plano por vez. Por isso o app alterna entre os navegadores marcados.
 
-## Observacoes
+## Observações
 
 - O projeto usa perfis persistentes do navegador.
-- Sessoes e cookies podem ficar salvos localmente.
+- Sessões e cookies podem ficar salvos localmente.
 - Use com responsabilidade.
 
-## Contribuicao
+## Contribuição
 
-Leia o arquivo `CONTRIBUTING.md` antes de enviar mudancas.
+Leia o arquivo `CONTRIBUTING.md` antes de enviar mudanças.
 
 ## Changelog
 
-As mudancas relevantes ficam registradas em `CHANGELOG.md`.
+As mudanças relevantes ficam registradas em `CHANGELOG.md`.
 
-## Licenca
+## Licença
 
-Este projeto esta licenciado sob a licenca MIT. Veja `LICENSE`.
+Este projeto está licenciado sob a licença MIT. Veja `LICENSE`.

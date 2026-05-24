@@ -30,7 +30,7 @@ def avisar_meta_atingida(indice, navegador_data, log):
 def normalizar_modo_pesquisa(modo_pesquisa):
     modo = str(modo_pesquisa or MODO_SEQUENCIAL).strip().lower()
 
-    if modo in ("simultaneo", "simultanea"):
+    if modo in ("simultaneo", "simultanea", "simultâneo", "simultânea"):
         return MODO_SIMULTANEO
 
     return MODO_SEQUENCIAL
@@ -53,11 +53,11 @@ async def executar_pesquisa(
     if detalhar:
         log("\n==============================")
         log(f"[NAVEGADOR {indice + 1}] INICIANDO PESQUISA")
-        log(f"[NAVEGADOR {indice + 1}] Nivel Rewards: {navegador_data['nivel']}")
-        log(f"[NAVEGADOR {indice + 1}] Pesquisa numero: {contador + 1}")
+        log(f"[NAVEGADOR {indice + 1}] Nível Rewards: {navegador_data['nivel']}")
+        log(f"[NAVEGADOR {indice + 1}] Pesquisa número: {contador + 1}")
 
     if detalhar and ultima_pesquisa[indice] != 0:
-        log(f"[NAVEGADOR {indice + 1}] Ultima pesquisa ha {tempo_desde:.2f}s")
+        log(f"[NAVEGADOR {indice + 1}] Última pesquisa há {tempo_desde:.2f}s")
 
     if detalhar:
         log(f"[NAVEGADOR {indice + 1}] Pesquisa: {pesquisa}")
@@ -103,7 +103,7 @@ async def executar_pesquisa(
     await pagina.wait_for_load_state("domcontentloaded")
 
     if detalhar:
-        log(f"[NAVEGADOR {indice + 1}] Pagina carregada.")
+        log(f"[NAVEGADOR {indice + 1}] Página carregada.")
 
     await pagina.mouse.wheel(0, random.randint(400, 1200))
 
@@ -117,7 +117,7 @@ async def executar_pesquisa(
     ultima_pesquisa[indice] = asyncio.get_running_loop().time()
 
     if detalhar:
-        log(f"[NAVEGADOR {indice + 1}] Pesquisa concluida.")
+        log(f"[NAVEGADOR {indice + 1}] Pesquisa concluída.")
 
     navegador_data["pontos"] += 3
     pontos_atuais = navegador_data["pontos"]
@@ -167,7 +167,7 @@ async def executar_automacao_sequencial(navegadores, log):
             contador += 1
 
             delay = random.uniform(DELAY_MIN, DELAY_MAX)
-            log(f"[NAVEGADOR {indice + 1}] Proxima pesquisa em {delay:.2f} segundos")
+            log(f"[NAVEGADOR {indice + 1}] Próxima pesquisa em {delay:.2f} segundos")
             log("==============================")
 
             await asyncio.sleep(delay)
@@ -213,7 +213,7 @@ async def executar_automacao_simultanea(navegadores, log):
         for indice in range(len(navegadores))
     }
 
-    log("[SISTEMA] Modo de pesquisa: simultanea")
+    log("[SISTEMA] Modo de pesquisa: simultânea")
     rodada = 1
 
     while contador < TOTAL_PESQUISAS:
@@ -237,7 +237,7 @@ async def executar_automacao_simultanea(navegadores, log):
         if not itens:
             break
 
-        log(f"\n========== RODADA SIMULTANEA {rodada} ==========")
+        log(f"\n========== RODADA SIMULTÂNEA {rodada} ==========")
 
         for item in itens:
             log(
@@ -277,7 +277,7 @@ async def executar_automacao_simultanea(navegadores, log):
             break
 
         delay = random.uniform(DELAY_MIN, DELAY_MAX)
-        log(f"[SISTEMA] Proxima rodada simultanea em {delay:.2f} segundos")
+        log(f"[SISTEMA] Próxima rodada simultânea em {delay:.2f} segundos")
         log("==============================")
 
         rodada += 1

@@ -195,6 +195,7 @@ class AndroidSearchAutomator:
             "type",
             "address",
             "endereco",
+            "endereço",
             "url",
             "web"
         )
@@ -278,7 +279,7 @@ class AndroidSearchAutomator:
         texto = self.formatar_texto_adb(pesquisa)
 
         if not texto:
-            raise RuntimeError("Pesquisa vazia depois da normalizacao.")
+            raise RuntimeError("Pesquisa vazia depois da normalização.")
 
         self.preparar_dispositivo()
         pagina_inicial = PAGINAS_INICIAIS.get(buscador)
@@ -291,7 +292,7 @@ class AndroidSearchAutomator:
             time.sleep(tempo_abrir)
 
         if not self.focar_barra_pesquisa():
-            raise RuntimeError("Nao foi possivel focar a barra de pesquisa.")
+            raise RuntimeError("Não foi possível focar a barra de pesquisa.")
 
         self.executar(["shell", "input", "text", texto], timeout=20)
         time.sleep(0.2)
@@ -340,7 +341,7 @@ class AndroidSearchAutomator:
         for indice_pesquisa, pesquisa in enumerate(pesquisas, start=1):
             for navegador in navegadores:
                 if deve_parar():
-                    log("[ANDROID] Automacao parada.")
+                    log("[ANDROID] Automação parada.")
                     return
 
                 acao_atual += 1
@@ -369,9 +370,9 @@ class AndroidSearchAutomator:
                 fim = time.time() + delay
                 while time.time() < fim:
                     if deve_parar():
-                        log("[ANDROID] Automacao parada.")
+                        log("[ANDROID] Automação parada.")
                         return
 
                     time.sleep(0.2)
 
-        log("[ANDROID] Automacao finalizada.")
+        log("[ANDROID] Automação finalizada.")
