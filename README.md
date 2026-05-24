@@ -56,6 +56,20 @@ Ou pelo Windows:
 iniciar_app.bat
 ```
 
+## Testes
+
+Execute a validacao de sintaxe:
+
+```bash
+python -B -m py_compile app.py main.py rewards_runner.py browser_manager.py config_manager.py android_automation.py search_generator.py logger.py
+```
+
+Execute os testes automatizados:
+
+```bash
+python -m unittest discover -s tests
+```
+
 ## Aba PC
 
 1. Informe a quantidade de navegadores.
@@ -118,3 +132,15 @@ O Android e controlado por ADB, entao apenas um navegador fica em primeiro plano
 - O projeto usa perfis persistentes do navegador.
 - Sessoes e cookies podem ficar salvos localmente.
 - Use com responsabilidade.
+
+## Contribuicao
+
+Leia o arquivo `CONTRIBUTING.md` antes de enviar mudancas.
+
+## Changelog
+
+As mudancas relevantes ficam registradas em `CHANGELOG.md`.
+
+## Licenca
+
+Este projeto esta licenciado sob a licenca MIT. Veja `LICENSE`.
